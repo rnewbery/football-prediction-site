@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from "@/lib/supabase-server";
 import {
   addFixture,
   deleteFixture,
+  unlinkApiFixture,
   updateFixture,
 } from "./actions";
 
@@ -53,7 +54,9 @@ export default async function FixturesPage({
               away_team,
               home_score,
               away_score,
-              match_status
+              match_status,
+              status,
+              external_fixture_id
             `
           )
           .eq("competition_id", competition.id)
@@ -73,8 +76,8 @@ export default async function FixturesPage({
           <h1>Manage fixtures and results</h1>
 
           <p className="intro">
-            Add fixtures, correct team details and enter the
-            actual match results.
+            Add fixtures, correct team details, enter match results
+            and check whether fixtures are linked to API-Football.
           </p>
         </div>
 
@@ -181,192 +184,220 @@ export default async function FixturesPage({
               <p>No fixtures have been added yet.</p>
             ) : (
               <div className="admin-fixture-list">
-                {fixtures.map((fixture) => (
-                  <article
-                    className="admin-fixture-card"
-                    key={fixture.id}
-                  >
-                    <form action={updateFixture}>
-                      <input
-                        type="hidden"
-                        name="fixture_id"
-                        value={fixture.id}
-                      />
+                {fixtures.map((fixture) => {
+                  const displayStatus =
+                    fixture.status ??
+                    fixture.match_status ??
+                    "scheduled";
 
-                      <input
-                        type="hidden"
-                        name="competition_id"
-                        value={competition.id}
-                      />
+                  return (
+                    <article
+                      className="admin-fixture-card"
+                      key={fixture.id}
+                    >
+                      <div className="form-message">
+  API fixture ID:{" "}
+  <strong>
+    {fixture.external_fixture_id ?? "Not linked"}
+  </strong>
 
-                      <div className="fixture-edit-grid">
-                        <div>
-                          <label
-                            htmlFor={`fixture-label-${fixture.id}`}
-                          >
-                            Date or label
-                          </label>
+  {fixture.external_fixture_id && (
+    <form action={unlinkApiFixture}>
+      <input
+        type="hidden"
+        name="fixture_id"
+        value={fixture.id}
+      />
 
-                          <input
-                            id={`fixture-label-${fixture.id}`}
-                            name="fixture_label"
-                            type="text"
-                            defaultValue={
-                              fixture.fixture_label ?? ""
-                            }
-                          />
+      <button
+        className="secondary-button"
+        type="submit"
+      >
+        Unlink API fixture
+      </button>
+    </form>
+  )}
+</div>
+
+                      <form action={updateFixture}>
+                        <input
+                          type="hidden"
+                          name="fixture_id"
+                          value={fixture.id}
+                        />
+
+                        <input
+                          type="hidden"
+                          name="competition_id"
+                          value={competition.id}
+                        />
+
+                        <div className="fixture-edit-grid">
+                          <div>
+                            <label
+                              htmlFor={`fixture-label-${fixture.id}`}
+                            >
+                              Date or label
+                            </label>
+
+                            <input
+                              id={`fixture-label-${fixture.id}`}
+                              name="fixture_label"
+                              type="text"
+                              defaultValue={
+                                fixture.fixture_label ?? ""
+                              }
+                            />
+                          </div>
+
+                          <div>
+                            <label
+                              htmlFor={`game-number-${fixture.id}`}
+                            >
+                              Game No.
+                            </label>
+
+                            <input
+                              id={`game-number-${fixture.id}`}
+                              name="game_number"
+                              type="text"
+                              defaultValue={
+                                fixture.group_name ?? ""
+                              }
+                            />
+                          </div>
+
+                          <div>
+                            <label
+                              htmlFor={`home-team-${fixture.id}`}
+                            >
+                              Home team
+                            </label>
+
+                            <input
+                              id={`home-team-${fixture.id}`}
+                              name="home_team"
+                              type="text"
+                              defaultValue={fixture.home_team}
+                              required
+                            />
+                          </div>
+
+                          <div>
+                            <label
+                              htmlFor={`away-team-${fixture.id}`}
+                            >
+                              Away team
+                            </label>
+
+                            <input
+                              id={`away-team-${fixture.id}`}
+                              name="away_team"
+                              type="text"
+                              defaultValue={fixture.away_team}
+                              required
+                            />
+                          </div>
+
+                          <div>
+                            <label
+                              htmlFor={`home-score-${fixture.id}`}
+                            >
+                              Home result
+                            </label>
+
+                            <input
+                              id={`home-score-${fixture.id}`}
+                              name="home_score"
+                              type="number"
+                              min="0"
+                              step="1"
+                              defaultValue={
+                                fixture.home_score ?? ""
+                              }
+                            />
+                          </div>
+
+                          <div>
+                            <label
+                              htmlFor={`away-score-${fixture.id}`}
+                            >
+                              Away result
+                            </label>
+
+                            <input
+                              id={`away-score-${fixture.id}`}
+                              name="away_score"
+                              type="number"
+                              min="0"
+                              step="1"
+                              defaultValue={
+                                fixture.away_score ?? ""
+                              }
+                            />
+                          </div>
+
+                          <div>
+                            <label
+                              htmlFor={`status-${fixture.id}`}
+                            >
+                              Status
+                            </label>
+
+                            <select
+                              id={`status-${fixture.id}`}
+                              name="match_status"
+                              defaultValue={displayStatus}
+                            >
+                              <option value="scheduled">
+                                Scheduled
+                              </option>
+
+                              <option value="live">
+                                Live
+                              </option>
+
+                              <option value="finished">
+                                Finished
+                              </option>
+
+                              <option value="postponed">
+                                Postponed
+                              </option>
+                            </select>
+                          </div>
                         </div>
 
-                        <div>
-                          <label
-                            htmlFor={`game-number-${fixture.id}`}
-                          >
-                            Game No.
-                          </label>
-
-                          <input
-                            id={`game-number-${fixture.id}`}
-                            name="game_number"
-                            type="text"
-                            defaultValue={
-                              fixture.group_name ?? ""
-                            }
-                          />
+                        <div className="form-actions">
+                          <button type="submit">
+                            Save changes
+                          </button>
                         </div>
+                      </form>
 
-                        <div>
-                          <label
-                            htmlFor={`home-team-${fixture.id}`}
-                          >
-                            Home team
-                          </label>
+                      <form action={deleteFixture}>
+                        <input
+                          type="hidden"
+                          name="fixture_id"
+                          value={fixture.id}
+                        />
 
-                          <input
-                            id={`home-team-${fixture.id}`}
-                            name="home_team"
-                            type="text"
-                            defaultValue={fixture.home_team}
-                            required
-                          />
-                        </div>
+                        <input
+                          type="hidden"
+                          name="competition_id"
+                          value={competition.id}
+                        />
 
-                        <div>
-                          <label
-                            htmlFor={`away-team-${fixture.id}`}
-                          >
-                            Away team
-                          </label>
-
-                          <input
-                            id={`away-team-${fixture.id}`}
-                            name="away_team"
-                            type="text"
-                            defaultValue={fixture.away_team}
-                            required
-                          />
-                        </div>
-
-                        <div>
-                          <label
-                            htmlFor={`home-score-${fixture.id}`}
-                          >
-                            Home result
-                          </label>
-
-                          <input
-                            id={`home-score-${fixture.id}`}
-                            name="home_score"
-                            type="number"
-                            min="0"
-                            step="1"
-                            defaultValue={
-                              fixture.home_score ?? ""
-                            }
-                          />
-                        </div>
-
-                        <div>
-                          <label
-                            htmlFor={`away-score-${fixture.id}`}
-                          >
-                            Away result
-                          </label>
-
-                          <input
-                            id={`away-score-${fixture.id}`}
-                            name="away_score"
-                            type="number"
-                            min="0"
-                            step="1"
-                            defaultValue={
-                              fixture.away_score ?? ""
-                            }
-                          />
-                        </div>
-
-                        <div>
-                          <label
-                            htmlFor={`status-${fixture.id}`}
-                          >
-                            Status
-                          </label>
-
-                          <select
-                            id={`status-${fixture.id}`}
-                            name="match_status"
-                            defaultValue={
-                              fixture.match_status ??
-                              "scheduled"
-                            }
-                          >
-                            <option value="scheduled">
-                              Scheduled
-                            </option>
-
-                            <option value="live">
-                              Live
-                            </option>
-
-                            <option value="finished">
-                              Finished
-                            </option>
-
-                            <option value="postponed">
-                              Postponed
-                            </option>
-                          </select>
-                        </div>
-                      </div>
-
-                      <div className="form-actions">
-                        <button type="submit">
-                          Save changes
+                        <button
+                          className="danger-button"
+                          type="submit"
+                        >
+                          Delete fixture
                         </button>
-                      </div>
-                    </form>
-
-                    <form action={deleteFixture}>
-                      <input
-                        type="hidden"
-                        name="fixture_id"
-                        value={fixture.id}
-                      />
-
-                      <input
-                        type="hidden"
-                        name="competition_id"
-                        value={competition.id}
-                      />
-
-                      <button
-                        className="danger-button"
-                        type="submit"
-                      >
-                        Delete fixture
-                      </button>
-                    </form>
-                  </article>
-                ))}
+                      </form>
+                    </article>
+                  );
+                })}
               </div>
             )}
           </section>

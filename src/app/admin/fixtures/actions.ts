@@ -64,6 +64,7 @@ export async function addFixture(formData: FormData) {
     home_team: homeTeam,
     away_team: awayTeam,
     match_status: "scheduled",
+    status: "scheduled",
   });
 
   if (error) {
@@ -78,6 +79,7 @@ export async function addFixture(formData: FormData) {
   revalidatePath("/predict");
   revalidatePath("/admin");
   revalidatePath("/admin/fixtures");
+  revalidatePath("/admin/score-sync");
 
   redirect("/admin/fixtures?success=Fixture added.");
 }
@@ -134,6 +136,7 @@ export async function updateFixture(formData: FormData) {
       home_score: homeScore,
       away_score: awayScore,
       match_status: matchStatus,
+      status: matchStatus,
     })
     .eq("id", fixtureId);
 
@@ -156,8 +159,42 @@ export async function updateFixture(formData: FormData) {
   revalidatePath("/leaderboard");
   revalidatePath("/admin");
   revalidatePath("/admin/fixtures");
+  revalidatePath("/admin/score-sync");
 
   redirect("/admin/fixtures?success=Fixture updated.");
+}
+
+export async function unlinkApiFixture(formData: FormData) {
+  const supabase = await getAuthenticatedClient();
+
+  const fixtureId = Number(formData.get("fixture_id"));
+
+  if (!fixtureId) {
+    redirect(
+      "/admin/fixtures?error=The API fixture link could not be removed."
+    );
+  }
+
+  const { error } = await supabase
+    .from("fixtures")
+    .update({
+      external_fixture_id: null,
+    })
+    .eq("id", fixtureId);
+
+  if (error) {
+    redirect(
+      `/admin/fixtures?error=${encodeURIComponent(
+        error.message
+      )}`
+    );
+  }
+
+  revalidatePath("/admin/fixtures");
+  revalidatePath("/admin/fixture-search");
+  revalidatePath("/admin/score-sync");
+
+  redirect("/admin/fixtures?success=API fixture link removed.");
 }
 
 export async function deleteFixture(formData: FormData) {
@@ -198,6 +235,7 @@ export async function deleteFixture(formData: FormData) {
   revalidatePath("/leaderboard");
   revalidatePath("/admin");
   revalidatePath("/admin/fixtures");
+  revalidatePath("/admin/score-sync");
 
   redirect("/admin/fixtures?success=Fixture deleted.");
 }

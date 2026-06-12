@@ -55,6 +55,7 @@ export default async function AdminPage() {
       <div className="page-header">
         <div>
           <p className="eyebrow">Administrator area</p>
+
           <h1>Competition dashboard</h1>
 
           <p className="intro">
@@ -64,26 +65,31 @@ export default async function AdminPage() {
         </div>
 
         <div className="admin-header-actions">
-  <Link className="button-link secondary" href="/">
-    View public website
-  </Link>
+          <Link className="button-link secondary" href="/">
+            View public website
+          </Link>
 
-  <form action={logout}>
-    <button className="danger-button sign-out-button" type="submit">
-      Sign out
-    </button>
-  </form>
-</div>
+          <form action={logout}>
+            <button
+              className="danger-button sign-out-button"
+              type="submit"
+            >
+              Sign out
+            </button>
+          </form>
+        </div>
       </div>
 
       <section className="admin-summary-grid">
         <article className="card admin-summary-card">
           <span>Signed in as</span>
+
           <strong>{user.email}</strong>
         </article>
 
         <article className="card admin-summary-card">
           <span>Current competition</span>
+
           <strong>
             {competition?.name ?? "No active competition"}
           </strong>
@@ -91,6 +97,7 @@ export default async function AdminPage() {
 
         <article className="card admin-summary-card">
           <span>Fixtures</span>
+
           <strong>{fixtureCount ?? 0}</strong>
         </article>
       </section>
@@ -104,6 +111,7 @@ export default async function AdminPage() {
           <div className="competition-details">
             <div>
               <span>Entry cost</span>
+
               <strong>
                 £{Number(competition.entry_cost).toFixed(2)}
               </strong>
@@ -111,6 +119,7 @@ export default async function AdminPage() {
 
             <div>
               <span>Closing date</span>
+
               <strong>
                 {competition.closing_date
                   ? new Date(
@@ -122,6 +131,7 @@ export default async function AdminPage() {
 
             <div>
               <span>Scoring</span>
+
               <strong>
                 Exact {competition.exact_score_points} / Result{" "}
                 {competition.correct_result_points}
@@ -134,23 +144,34 @@ export default async function AdminPage() {
       <section className="card">
         <h2>Admin tools</h2>
 
-       <div className="admin-links">
-  <Link className="admin-tool-link" href="/admin/settings">
-    Edit competition settings
-  </Link>
+        <div className="admin-links">
+          <Link className="admin-tool-link" href="/admin/settings">
+            Edit competition settings
+          </Link>
 
-  <Link className="admin-tool-link" href="/admin/fixtures">
-    Manage fixtures and results
-  </Link>
+          <Link className="admin-tool-link" href="/admin/fixtures">
+            Manage fixtures and results
+          </Link>
 
-  <Link className="admin-tool-link" href="/admin/entries">
-    View participant entries
-  </Link>
+          <Link
+            className="admin-tool-link"
+            href="/admin/fixture-search"
+          >
+            Search and link API fixtures
+          </Link>
 
-  <Link className="admin-tool-link" href="/leaderboard">
-    View leaderboard
-  </Link>
-</div>
+          <Link className="admin-tool-link" href="/admin/score-sync">
+            Update scores from API
+          </Link>
+
+          <Link className="admin-tool-link" href="/admin/entries">
+            View participant entries
+          </Link>
+
+          <Link className="admin-tool-link" href="/leaderboard">
+            View leaderboard
+          </Link>
+        </div>
       </section>
     </main>
   );
