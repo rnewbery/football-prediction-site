@@ -1,49 +1,245 @@
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-html {
-  height: 100%;
+* {
+  box-sizing: border-box;
 }
 
 html,
 body {
-  max-width: 100vw;
-  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  min-height: 100%;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #f4f6f8;
+  color: #1f2937;
+}
+
+main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 24px;
+}
+
+h1 {
+  margin-top: 0;
+  font-size: 2.2rem;
+}
+
+p {
+  font-size: 1.1rem;
+}
+.hero {
+  background: white;
+  border: 1px solid #dbe1e7;
+  border-radius: 14px;
+  padding: 48px;
+  margin-bottom: 24px;
+}
+
+.eyebrow {
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #2563eb;
+}
+
+.hero h1 {
+  max-width: 720px;
+  margin-bottom: 16px;
+  font-size: 3rem;
+  line-height: 1.1;
+}
+
+.intro {
+  max-width: 680px;
+  margin-bottom: 28px;
+  color: #4b5563;
+  line-height: 1.7;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+button {
+  border: 0;
+  border-radius: 8px;
+  padding: 12px 18px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: #2563eb;
+  color: white;
+}
+
+button.secondary {
+  background: #e5e7eb;
+  color: #1f2937;
+}
+
+.card {
+  background: white;
+  border: 1px solid #dbe1e7;
+  border-radius: 14px;
+  padding: 28px;
+}
+
+.card h2 {
+  margin-top: 0;
+}
+
+.competition-details {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.competition-details div {
   display: flex;
   flex-direction: column;
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  gap: 6px;
 }
 
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
+.competition-details span {
+  font-size: 0.9rem;
+  color: #6b7280;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
+@media (max-width: 700px) {
+  main {
+    padding: 24px 16px;
   }
+
+  .hero {
+    padding: 28px;
+  }
+
+  .hero h1 {
+    font-size: 2.2rem;
+  }
+
+  .competition-details {
+    grid-template-columns: 1fr;
+  }
+}
+.button-link {
+  display: inline-block;
+  border-radius: 8px;
+  padding: 12px 18px;
+  font-size: 1rem;
+  font-weight: 700;
+  text-decoration: none;
+  background: #2563eb;
+  color: white;
+}
+
+.button-link.secondary {
+  background: #e5e7eb;
+  color: #1f2937;
+}
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+
+label {
+  display: block;
+  margin-bottom: 7px;
+  font-weight: 700;
+}
+
+input {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 11px 12px;
+  font: inherit;
+  background: white;
+}
+
+input:focus {
+  outline: 2px solid #93c5fd;
+  border-color: #2563eb;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.fixtures-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+}
+
+.fixtures-table th,
+.fixtures-table td {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 14px 10px;
+  text-align: left;
+}
+
+.fixtures-table th {
+  background: #f8fafc;
+  font-size: 0.9rem;
+}
+
+.score-input {
+  width: 72px;
+  text-align: center;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+}
+
+.secondary-button {
+  background: #e5e7eb;
+  color: #1f2937;
+}
+
+@media (max-width: 700px) {
+  .page-header {
+    flex-direction: column;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.leaderboard-table th,
+.leaderboard-table td {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 16px 12px;
+  text-align: left;
+}
+
+.leaderboard-table th {
+  background: #f8fafc;
+  font-size: 0.9rem;
+}
+
+.leaderboard-table tbody tr:first-child {
+  background: #eff6ff;
 }
