@@ -25,7 +25,7 @@ export default async function Home() {
   return (
     <main>
       <section className="hero">
-        <p className="eyebrow">Football prediction competition</p>
+        <p className="eyebrow">Gary's Football Comps</p>
 
         <h1>Predict the scores. Follow the leaderboard.</h1>
 
