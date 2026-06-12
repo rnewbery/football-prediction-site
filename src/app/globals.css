@@ -243,3 +243,16 @@ input:focus {
 .leaderboard-table tbody tr:first-child {
   background: #eff6ff;
 }
+.form-message {
+  margin-top: 20px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #1e3a8a;
+  font-weight: 700;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}

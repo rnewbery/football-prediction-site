@@ -1,36 +1,58 @@
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 
-const leaderboard = [
-  {
-    position: 1,
-    previousPosition: 2,
-    name: "Alfie",
-    points: 24,
-    exactScores: 3,
-  },
-  {
-    position: 2,
-    previousPosition: 1,
-    name: "Sean",
-    points: 21,
-    exactScores: 2,
-  },
-  {
-    position: 3,
-    previousPosition: 4,
-    name: "Margaret",
-    points: 18,
-    exactScores: 2,
-  },
-];
+type LeaderboardEntry = {
+  participant_name: string;
+  total_points: number;
+  exact_scores: number;
+};
 
-export default function LeaderboardPage() {
+export default async function LeaderboardPage() {
+  const { data: competition, error: competitionError } =
+    await supabase
+      .from("competitions")
+      .select("id, name")
+      .eq("is_active", true)
+      .limit(1)
+      .maybeSingle();
+
+  if (competitionError) {
+    console.error(
+      "Unable to load competition:",
+      competitionError.message
+    );
+  }
+
+  let leaderboard: LeaderboardEntry[] = [];
+
+  if (competition) {
+    const { data, error } = await supabase.rpc(
+      "get_competition_leaderboard",
+      {
+        p_competition_id: competition.id,
+      }
+    );
+
+    if (error) {
+      console.error(
+        "Unable to load leaderboard:",
+        error.message
+      );
+    } else {
+      leaderboard = data ?? [];
+    }
+  }
+
   return (
     <main>
       <div className="page-header">
         <div>
-          <p className="eyebrow">Current competition</p>
+          <p className="eyebrow">
+            {competition?.name ?? "Current competition"}
+          </p>
+
           <h1>Leaderboard</h1>
+
           <p className="intro">
             See the latest positions and points for the competition.
           </p>
@@ -42,39 +64,40 @@ export default function LeaderboardPage() {
       </div>
 
       <section className="card">
-        <div className="table-wrapper">
-          <table className="leaderboard-table">
-            <thead>
-              <tr>
-                <th>Position</th>
-                <th>Previous</th>
-                <th>Participant</th>
-                <th>Points</th>
-                <th>Exact scores</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {leaderboard.map((entry) => (
-                <tr key={entry.name}>
-                  <td>
-                    <strong>{entry.position}</strong>
-                  </td>
-                  <td>{entry.previousPosition}</td>
-                  <td>{entry.name}</td>
-                  <td>{entry.points}</td>
-                  <td>{entry.exactScores}</td>
+        {!competition ? (
+          <p>No active competition is available.</p>
+        ) : leaderboard.length === 0 ? (
+          <p>No competition entries are available yet.</p>
+        ) : (
+          <div className="table-wrapper">
+            <table className="leaderboard-table">
+              <thead>
+                <tr>
+                  <th>Position</th>
+                  <th>Participant</th>
+                  <th>Points</th>
+                  <th>Exact scores</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
 
-        <div className="form-actions">
-          <button className="secondary-button" type="button">
-            Print leaderboard
-          </button>
-        </div>
+              <tbody>
+                {leaderboard.map((entry, index) => (
+                  <tr
+                    key={`${entry.participant_name}-${index}`}
+                  >
+                    <td>
+                      <strong>{index + 1}</strong>
+                    </td>
+
+                    <td>{entry.participant_name}</td>
+                    <td>{entry.total_points}</td>
+                    <td>{entry.exact_scores}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
     </main>
   );

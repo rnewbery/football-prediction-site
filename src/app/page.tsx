@@ -1,6 +1,27 @@
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 
-export default function Home() {
+export default async function Home() {
+  const { data: competition, error } = await supabase
+    .from("competitions")
+    .select("name, entry_cost, closing_date")
+    .eq("is_active", true)
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Unable to load competition:", error.message);
+  }
+
+  const competitionName = competition?.name ?? "No active competition";
+  const entryCost = competition
+    ? `£${Number(competition.entry_cost).toFixed(2)}`
+    : "Not available";
+
+  const closingDate = competition?.closing_date
+    ? new Date(competition.closing_date).toLocaleString("en-GB")
+    : "To be confirmed";
+
   return (
     <main>
       <section className="hero">
@@ -30,17 +51,17 @@ export default function Home() {
         <div className="competition-details">
           <div>
             <span>Competition</span>
-            <strong>Next Football Competition</strong>
+            <strong>{competitionName}</strong>
           </div>
 
           <div>
             <span>Entry cost</span>
-            <strong>£5.00</strong>
+            <strong>{entryCost}</strong>
           </div>
 
           <div>
             <span>Closing date</span>
-            <strong>To be confirmed</strong>
+            <strong>{closingDate}</strong>
           </div>
         </div>
       </section>
