@@ -27,6 +27,7 @@ export default function PredictionForm({
 }: PredictionFormProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [accessCode, setAccessCode] = useState("");
 
   const [scores, setScores] = useState<
     Record<number, PredictionScores>
@@ -56,9 +57,15 @@ export default function PredictionForm({
 
     const trimmedName = name.trim();
     const trimmedEmail = email.trim();
+    const trimmedAccessCode = accessCode.trim();
 
     if (!trimmedName) {
       setMessage("Please enter your name.");
+      return;
+    }
+
+    if (!trimmedAccessCode) {
+      setMessage("Please enter the competition access code.");
       return;
     }
 
@@ -91,26 +98,40 @@ export default function PredictionForm({
         p_competition_id: competitionId,
         p_participant_name: trimmedName,
         p_participant_email: trimmedEmail,
+        p_access_code: trimmedAccessCode,
         p_predictions: predictionRows,
       }
     );
 
     if (error || !entryId) {
       console.log("Submission error:", error);
-      setMessage(
-        error?.message ??
-          "Your predictions could not be submitted."
-      );
+
+      if (
+        error?.message
+          ?.toLowerCase()
+          .includes("access code")
+      ) {
+        setMessage(
+          "The competition access code is incorrect. Please check it and try again."
+        );
+      } else {
+        setMessage(
+          error?.message ??
+            "Your predictions could not be submitted."
+        );
+      }
+
       setIsSubmitting(false);
       return;
     }
 
     setMessage(
-      `Your predictions have been submitted successfully. Entry reference: ${entryId}`
+      `Your predictions have been submitted. Entry reference: ${entryId}. Your entry is pending until payment has been confirmed by the organiser.`
     );
 
     setName("");
     setEmail("");
+    setAccessCode("");
     setScores({});
     setIsSubmitting(false);
   }
@@ -145,7 +166,30 @@ export default function PredictionForm({
               onChange={(event) => setEmail(event.target.value)}
             />
           </div>
+
+          <div>
+            <label htmlFor="access-code">
+              Competition access code
+            </label>
+
+            <input
+              id="access-code"
+              name="access_code"
+              type="text"
+              value={accessCode}
+              onChange={(event) =>
+                setAccessCode(event.target.value)
+              }
+              placeholder="Enter the code from the organiser"
+              required
+            />
+          </div>
         </div>
+
+        <p className="form-message">
+          Entries will only appear on the leaderboard once payment
+          has been confirmed.
+        </p>
       </section>
 
       <section className="card">
