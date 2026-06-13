@@ -661,3 +661,84 @@ select {
   flex-wrap: wrap;
   margin: 18px 0;
 }
+.payment-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 16px 0 20px;
+}
+
+.payment-actions form {
+  margin: 0;
+}
+
+.payment-actions button {
+  width: auto;
+  min-width: 0;
+  padding: 10px 14px;
+  font-size: 0.95rem;
+  line-height: 1.2;
+}
+
+.entry-card .danger-button,
+.entry-card .secondary-button,
+.entry-card button {
+  max-width: fit-content;
+}
+
+.entry-card > form:last-child {
+  margin-top: 16px;
+}
+
+.entry-card > form:last-child .danger-button {
+  padding: 9px 13px;
+  font-size: 0.9rem;
+}
+.payment-actions button {
+  width: auto;
+  min-width: 120px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  line-height: 1.2;
+}
+.payment-actions {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 18px 0 22px;
+}
+
+.payment-actions form {
+  margin: 0;
+  display: flex;
+}
+
+.payment-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 42px;
+  width: auto;
+  min-width: 150px;
+  padding: 0 16px;
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+.input-help {
+  margin: 6px 0 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+textarea {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+  resize: vertical;
+}

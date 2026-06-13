@@ -33,7 +33,12 @@ export default async function SettingsPage({
       closing_date,
       exact_score_points,
       correct_result_points,
-      incorrect_result_points
+      incorrect_result_points,
+      access_code,
+      first_prize,
+      second_prize,
+      third_prize,
+      prize_notes
     `)
     .eq("is_active", true)
     .limit(1)
@@ -50,10 +55,12 @@ export default async function SettingsPage({
       <div className="page-header">
         <div>
           <p className="eyebrow">Administrator area</p>
+
           <h1>Competition settings</h1>
 
           <p className="intro">
-            Edit the competition details and scoring rules.
+            Edit the competition details, access code, prizes and
+            scoring rules.
           </p>
         </div>
 
@@ -87,6 +94,8 @@ export default async function SettingsPage({
               value={competition.id}
             />
 
+            <h2>Basic details</h2>
+
             <div className="settings-grid">
               <div>
                 <label htmlFor="competition-name">
@@ -100,6 +109,26 @@ export default async function SettingsPage({
                   defaultValue={competition.name}
                   required
                 />
+              </div>
+
+              <div>
+                <label htmlFor="access-code">
+                  Competition access code
+                </label>
+
+                <input
+                  id="access-code"
+                  name="access_code"
+                  type="text"
+                  defaultValue={competition.access_code ?? ""}
+                  placeholder="Example: GARY2026"
+                  required
+                />
+
+                <p className="input-help">
+                  People need this code before they can submit an
+                  entry.
+                </p>
               </div>
 
               <div>
@@ -127,7 +156,71 @@ export default async function SettingsPage({
                   defaultValue={closingDateValue}
                 />
               </div>
+            </div>
 
+            <h2>Prizes</h2>
+
+            <div className="settings-grid">
+              <div>
+                <label htmlFor="first-prize">
+                  First prize
+                </label>
+
+                <input
+                  id="first-prize"
+                  name="first_prize"
+                  type="text"
+                  defaultValue={competition.first_prize ?? ""}
+                  placeholder="Example: £100"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="second-prize">
+                  Second prize
+                </label>
+
+                <input
+                  id="second-prize"
+                  name="second_prize"
+                  type="text"
+                  defaultValue={competition.second_prize ?? ""}
+                  placeholder="Example: £50"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="third-prize">
+                  Third prize
+                </label>
+
+                <input
+                  id="third-prize"
+                  name="third_prize"
+                  type="text"
+                  defaultValue={competition.third_prize ?? ""}
+                  placeholder="Example: £25"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="prize-notes">
+                  Prize notes
+                </label>
+
+                <textarea
+                  id="prize-notes"
+                  name="prize_notes"
+                  defaultValue={competition.prize_notes ?? ""}
+                  placeholder="Example: Prizes depend on number of paid entries."
+                  rows={4}
+                />
+              </div>
+            </div>
+
+            <h2>Scoring rules</h2>
+
+            <div className="settings-grid">
               <div>
                 <label htmlFor="exact-points">
                   Exact-score points
