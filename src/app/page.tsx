@@ -35,11 +35,11 @@ export default async function Home() {
       <section className="hero">
         <p className="eyebrow">Gary&apos;s Football Comps</p>
 
-        <h1>Predict the scores. Follow the leaderboard.</h1>
+        <h1>Predict the scores & follow the leaderboard.</h1>
 
         <p className="intro">
           Enter your predictions for the current competition and
-          see how you compare once the results begin.
+          follow the leaderboard once the results come in.
         </p>
 
         <div className="actions">
@@ -63,8 +63,8 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="card">
-        <h2>Current competition</h2>
+      <section className="card current-competition-card">
+  <h2>Current competition</h2>
 
         <div className="competition-details">
           <div>

@@ -226,7 +226,7 @@ export default function LeaderboardClient({
                       <tr>
                         <th>Position</th>
                         <th>Participant</th>
-                        <th>Points</th>
+                        <th>Total Points</th>
                         <th>Exact scores</th>
                       </tr>
                     </thead>

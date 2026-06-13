@@ -54,7 +54,7 @@ export default async function AdminPage() {
     <main>
       <div className="page-header">
         <div>
-          <p className="eyebrow">Administrator area</p>
+          <p className="eyebrow">Admin Dashboard</p>
 
           <h1>Competition dashboard</h1>
 
