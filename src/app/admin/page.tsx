@@ -54,13 +54,13 @@ export default async function AdminPage() {
     <main>
       <div className="page-header">
         <div>
-          <p className="eyebrow">Admin Dashboard</p>
+          <p className="eyebrow">Admin Portal</p>
 
           <h1>Competition dashboard</h1>
 
           <p className="intro">
             Manage the current competition, fixtures, results,
-            participant entries and payment approvals.
+            participant entries and approvals.
           </p>
         </div>
 
@@ -142,42 +142,59 @@ export default async function AdminPage() {
       </section>
 
       <section className="card">
-  <h2>Admin tools</h2>
+        <h2>Main admin tools</h2>
 
-  <div className="admin-links">
-    <Link className="admin-tool-link" href="/admin/entries">
-      View and approve participant entries
-    </Link>
+        <p>
+          Use these for the live competition: approving entries,
+          checking the leaderboard, managing fixtures and entering
+          results.
+        </p>
 
-    <Link className="admin-tool-link" href="/admin/leaderboard">
-      View current leaderboard
-    </Link>
+        <div className="admin-links">
+          <Link className="admin-tool-link" href="/admin/entries">
+            View and approve participant entries
+          </Link>
 
-    <Link className="admin-tool-link" href="/admin/fixtures">
-      Manage fixtures and results
-    </Link>
+          <Link className="admin-tool-link" href="/admin/leaderboard">
+            View current leaderboard
+          </Link>
 
-    <Link className="admin-tool-link" href="/admin/score-sync">
-      Update scores from API
-    </Link>
+          <Link className="admin-tool-link" href="/admin/fixtures">
+            Manage fixtures and results
+          </Link>
 
-    <Link className="admin-tool-link" href="/admin/fixture-search">
-      Search and link API fixtures
-    </Link>
+          <Link className="admin-tool-link" href="/admin/settings">
+            Edit competition settings
+          </Link>
 
-    <Link className="admin-tool-link" href="/admin/settings">
-      Edit competition settings
-    </Link>
+          <Link className="admin-tool-link" href="/admin/competitions">
+            Create or archive competitions
+          </Link>
 
-    <Link className="admin-tool-link" href="/admin/competitions">
-      Create or archive competitions
-    </Link>
+          <Link className="admin-tool-link" href="/admin/fixture-import">
+            Import fixtures from CSV
+          </Link>
+        </div>
+      </section>
 
-    <Link className="admin-tool-link" href="/admin/fixture-import">
-      Import fixtures from CSV
-    </Link>
-  </div>
-</section>
+      <section className="card admin-summary-card">
+        <h2>API automation tools</h2>
+
+        <p>
+          These are kept for future automated score updates to be used if
+          the API is upgraded or another provider is added.
+        </p>
+
+        <div className="admin-links">
+          <Link className="admin-tool-link" href="/admin/fixture-search">
+            Search and link API fixtures
+          </Link>
+
+          <Link className="admin-tool-link" href="/admin/score-sync">
+            Update scores from API
+          </Link>
+        </div>
+      </section>
     </main>
   );
 }
