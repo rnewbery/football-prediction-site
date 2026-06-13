@@ -142,43 +142,42 @@ export default async function AdminPage() {
       </section>
 
       <section className="card">
-        <h2>Admin tools</h2>
+  <h2>Admin tools</h2>
 
-        <div className="admin-links">
-          <Link className="admin-tool-link" href="/admin/competitions">
-  Create or archive competitions
-</Link>
-          <Link className="admin-tool-link" href="/admin/settings">
-            Edit competition settings
-          </Link>
+  <div className="admin-links">
+    <Link className="admin-tool-link" href="/admin/entries">
+      View and approve participant entries
+    </Link>
 
-          <Link className="admin-tool-link" href="/admin/fixtures">
-            Manage fixtures and results
-          </Link>
-          <Link className="admin-tool-link" href="/admin/fixture-import">
-  Import fixtures from CSV
-</Link>
+    <Link className="admin-tool-link" href="/admin/leaderboard">
+      View current leaderboard
+    </Link>
 
-          <Link
-            className="admin-tool-link"
-            href="/admin/fixture-search"
-          >
-            Search and link API fixtures
-          </Link>
+    <Link className="admin-tool-link" href="/admin/fixtures">
+      Manage fixtures and results
+    </Link>
 
-          <Link className="admin-tool-link" href="/admin/score-sync">
-            Update scores from API
-          </Link>
+    <Link className="admin-tool-link" href="/admin/score-sync">
+      Update scores from API
+    </Link>
 
-          <Link className="admin-tool-link" href="/admin/entries">
-            View and approve participant entries
-          </Link>
+    <Link className="admin-tool-link" href="/admin/fixture-search">
+      Search and link API fixtures
+    </Link>
 
-<Link className="admin-tool-link" href="/admin/leaderboard">
-  View current leaderboard
-</Link>
-        </div>
-      </section>
+    <Link className="admin-tool-link" href="/admin/settings">
+      Edit competition settings
+    </Link>
+
+    <Link className="admin-tool-link" href="/admin/competitions">
+      Create or archive competitions
+    </Link>
+
+    <Link className="admin-tool-link" href="/admin/fixture-import">
+      Import fixtures from CSV
+    </Link>
+  </div>
+</section>
     </main>
   );
 }
