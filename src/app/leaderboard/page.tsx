@@ -1,18 +1,21 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import PrintButton from "./PrintButton";
-
-type LeaderboardEntry = {
-  participant_name: string;
-  total_points: number;
-  exact_scores: number;
-};
+import LeaderboardClient from "./LeaderboardClient";
 
 export default async function LeaderboardPage() {
   const { data: competition, error: competitionError } =
     await supabase
       .from("competitions")
-      .select("id, name")
+      .select(
+        `
+          id,
+          name,
+          first_prize,
+          second_prize,
+          third_prize,
+          prize_notes
+        `
+      )
       .eq("is_active", true)
       .limit(1)
       .maybeSingle();
@@ -22,26 +25,6 @@ export default async function LeaderboardPage() {
       "Unable to load competition:",
       competitionError.message
     );
-  }
-
-  let leaderboard: LeaderboardEntry[] = [];
-
-  if (competition) {
-    const { data, error } = await supabase.rpc(
-      "get_competition_leaderboard",
-      {
-        p_competition_id: competition.id,
-      }
-    );
-
-    if (error) {
-      console.error(
-        "Unable to load leaderboard:",
-        error.message
-      );
-    } else {
-      leaderboard = data ?? [];
-    }
   }
 
   return (
@@ -55,7 +38,8 @@ export default async function LeaderboardPage() {
           <h1>Leaderboard</h1>
 
           <p className="intro">
-            See the latest positions and points for the competition.
+            Enter the competition code to view the approved
+            leaderboard and competition information.
           </p>
         </div>
 
@@ -64,48 +48,19 @@ export default async function LeaderboardPage() {
         </Link>
       </div>
 
-      <section className="card">
-        {!competition ? (
+      {!competition ? (
+        <section className="card">
           <p>No active competition is available.</p>
-        ) : leaderboard.length === 0 ? (
-          <p>No competition entries are available yet.</p>
-        ) : (
-          <>
-            <div className="table-wrapper">
-              <table className="leaderboard-table">
-                <thead>
-                  <tr>
-                    <th>Position</th>
-                    <th>Participant</th>
-                    <th>Points</th>
-                    <th>Exact scores</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {leaderboard.map((entry, index) => (
-                    <tr
-                      key={`${entry.participant_name}-${index}`}
-                    >
-                      <td>
-                        <strong>{index + 1}</strong>
-                      </td>
-
-                      <td>{entry.participant_name}</td>
-                      <td>{entry.total_points}</td>
-                      <td>{entry.exact_scores}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="form-actions">
-              <PrintButton />
-            </div>
-          </>
-        )}
-      </section>
+        </section>
+      ) : (
+        <LeaderboardClient
+          competitionId={competition.id}
+          firstPrize={competition.first_prize}
+          secondPrize={competition.second_prize}
+          thirdPrize={competition.third_prize}
+          prizeNotes={competition.prize_notes}
+        />
+      )}
     </main>
   );
 }

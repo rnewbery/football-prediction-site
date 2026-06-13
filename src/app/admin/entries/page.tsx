@@ -1,3 +1,4 @@
+import ExportEntriesButton from "./ExportEntriesButton";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
@@ -186,6 +187,18 @@ export default async function EntriesPage({
         </section>
       ) : (
         <>
+          <section className="card">
+  <h2>Export entries</h2>
+
+  <p>
+    Download all participant entries and predictions as a CSV file
+    for Excel.
+  </p>
+
+  <div className="form-actions">
+    <ExportEntriesButton entries={entries} />
+  </div>
+</section>
           <section className="admin-summary-grid">
             <article className="card admin-summary-card">
               <span>Pending payment</span>
