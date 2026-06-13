@@ -655,3 +655,9 @@ select {
   min-width: 320px;
   flex: 1;
 }
+.payment-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 18px 0;
+}

@@ -1,7 +1,19 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
-import { deleteEntry } from "./actions";
+import {
+  approveEntry,
+  deleteEntry,
+  markEntryPending,
+  rejectEntry,
+} from "./actions";
+
+type EntriesPageProps = {
+  searchParams?: Promise<{
+    error?: string;
+    success?: string;
+  }>;
+};
 
 type FixtureRelationship = {
   fixture_label: string | null;
@@ -29,11 +41,30 @@ type ParticipantRelationship = {
 type Entry = {
   id: number;
   submitted_at: string;
+  payment_status: string | null;
+  approved_at: string | null;
+  rejected_at: string | null;
   participant: ParticipantRelationship | null;
   predictions: Prediction[];
 };
 
-export default async function EntriesPage() {
+function paymentStatusLabel(status: string | null) {
+  if (status === "approved") {
+    return "Approved / paid";
+  }
+
+  if (status === "rejected") {
+    return "Rejected / not counted";
+  }
+
+  return "Pending payment";
+}
+
+export default async function EntriesPage({
+  searchParams,
+}: EntriesPageProps) {
+  const resolvedSearchParams = await searchParams;
+
   const supabase = await createSupabaseServerClient();
 
   const {
@@ -65,6 +96,9 @@ export default async function EntriesPage() {
         .select(`
           id,
           submitted_at,
+          payment_status,
+          approved_at,
+          rejected_at,
           participant:participants!entries_participant_id_fkey (
             name,
             email
@@ -98,6 +132,20 @@ export default async function EntriesPage() {
 
   const entries = (data ?? []) as unknown as Entry[];
 
+  const pendingEntries = entries.filter(
+    (entry) =>
+      !entry.payment_status ||
+      entry.payment_status === "pending"
+  ).length;
+
+  const approvedEntries = entries.filter(
+    (entry) => entry.payment_status === "approved"
+  ).length;
+
+  const rejectedEntries = entries.filter(
+    (entry) => entry.payment_status === "rejected"
+  ).length;
+
   return (
     <main>
       <div className="page-header">
@@ -107,8 +155,8 @@ export default async function EntriesPage() {
           <h1>Participant entries</h1>
 
           <p className="intro">
-            Review submitted predictions and points for the current
-            competition.
+            Review submitted predictions, confirm payment and
+            control which entries appear on the leaderboard.
           </p>
         </div>
 
@@ -120,156 +168,302 @@ export default async function EntriesPage() {
         </Link>
       </div>
 
+      {resolvedSearchParams?.success && (
+        <section className="card success-card">
+          <p>{resolvedSearchParams.success}</p>
+        </section>
+      )}
+
+      {resolvedSearchParams?.error && (
+        <section className="card error-card">
+          <p>{resolvedSearchParams.error}</p>
+        </section>
+      )}
+
       {!competition ? (
         <section className="card">
           <p>No active competition is available.</p>
         </section>
-      ) : entries.length === 0 ? (
-        <section className="card">
-          <p>No entries have been submitted yet.</p>
-        </section>
       ) : (
-        <section className="entries-list">
-          {entries.map((entry) => {
-            const totalPoints = entry.predictions.reduce(
-              (total, prediction) =>
-                total + Number(prediction.points_awarded ?? 0),
-              0
-            );
+        <>
+          <section className="admin-summary-grid">
+            <article className="card admin-summary-card">
+              <span>Pending payment</span>
+              <strong>{pendingEntries}</strong>
+            </article>
 
-            const exactScores = entry.predictions.filter(
-              (prediction) => prediction.is_exact_score
-            ).length;
+            <article className="card admin-summary-card">
+              <span>Approved / paid</span>
+              <strong>{approvedEntries}</strong>
+            </article>
 
-            return (
-              <article
-                className="card entry-card"
-                key={entry.id}
-              >
-                <div className="entry-header">
-                  <div>
-                    <h2>
-                      {entry.participant?.name ??
-                        "Unnamed participant"}
-                    </h2>
+            <article className="card admin-summary-card">
+              <span>Rejected</span>
+              <strong>{rejectedEntries}</strong>
+            </article>
+          </section>
 
-                    <p className="entry-meta">
-                      Entry reference: {entry.id}
-                    </p>
+          {entries.length === 0 ? (
+            <section className="card">
+              <p>No entries have been submitted yet.</p>
+            </section>
+          ) : (
+            <section className="entries-list">
+              {entries.map((entry) => {
+                const totalPoints = entry.predictions.reduce(
+                  (total, prediction) =>
+                    total +
+                    Number(prediction.points_awarded ?? 0),
+                  0
+                );
 
-                    <p className="entry-meta">
-                      Email:{" "}
-                      {entry.participant?.email ??
-                        "Not provided"}
-                    </p>
+                const exactScores = entry.predictions.filter(
+                  (prediction) => prediction.is_exact_score
+                ).length;
 
-                    <p className="entry-meta">
-                      Submitted:{" "}
-                      {new Date(
-                        entry.submitted_at
-                      ).toLocaleString("en-GB")}
-                    </p>
-                  </div>
+                const paymentStatus =
+                  entry.payment_status ?? "pending";
 
-                  <div className="entry-score-summary">
-                    <div>
-                      <span>Points</span>
-                      <strong>{totalPoints}</strong>
-                    </div>
-
-                    <div>
-                      <span>Exact scores</span>
-                      <strong>{exactScores}</strong>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="table-wrapper">
-                  <table className="entries-table">
-                    <thead>
-                      <tr>
-                        <th>Game No.</th>
-                        <th>Fixture</th>
-                        <th>Prediction</th>
-                        <th>Result</th>
-                        <th>Points</th>
-                      </tr>
-                    </thead>
-
-                    <tbody>
-                      {entry.predictions.map((prediction) => {
-                        const fixture = prediction.fixture;
-
-                        const hasResult =
-                          fixture?.home_score !== null &&
-                          fixture?.home_score !== undefined &&
-                          fixture?.away_score !== null &&
-                          fixture?.away_score !== undefined;
-
-                        const actualResult = hasResult
-                          ? `${fixture.home_score} - ${fixture.away_score}`
-                          : "Not played";
-
-                        return (
-                          <tr key={prediction.id}>
-                            <td>
-                              {fixture?.group_name ?? ""}
-                            </td>
-
-                            <td>
-                              {fixture
-                                ? `${fixture.home_team} v ${fixture.away_team}`
-                                : "Fixture unavailable"}
-                            </td>
-
-                            <td>
-                              {prediction.predicted_home_score}
-                              {" - "}
-                              {prediction.predicted_away_score}
-                            </td>
-
-                            <td>{actualResult}</td>
-
-                            <td>
-                              {prediction.points_awarded}
-
-                              {prediction.is_exact_score && (
-                                <span className="exact-badge">
-                                  Exact
-                                </span>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-
-                <form action={deleteEntry}>
-                  <input
-                    type="hidden"
-                    name="entry_id"
-                    value={entry.id}
-                  />
-
-                  <input
-                    type="hidden"
-                    name="competition_id"
-                    value={competition.id}
-                  />
-
-                  <button
-                    className="danger-button"
-                    type="submit"
+                return (
+                  <article
+                    className="card entry-card"
+                    key={entry.id}
                   >
-                    Delete entry
-                  </button>
-                </form>
-              </article>
-            );
-          })}
-        </section>
+                    <div className="entry-header">
+                      <div>
+                        <h2>
+                          {entry.participant?.name ??
+                            "Unnamed participant"}
+                        </h2>
+
+                        <p className="entry-meta">
+                          Entry reference: {entry.id}
+                        </p>
+
+                        <p className="entry-meta">
+                          Email:{" "}
+                          {entry.participant?.email ??
+                            "Not provided"}
+                        </p>
+
+                        <p className="entry-meta">
+                          Submitted:{" "}
+                          {new Date(
+                            entry.submitted_at
+                          ).toLocaleString("en-GB")}
+                        </p>
+
+                        <p className="entry-meta">
+                          Payment status:{" "}
+                          <strong>
+                            {paymentStatusLabel(
+                              paymentStatus
+                            )}
+                          </strong>
+                        </p>
+
+                        {entry.approved_at && (
+                          <p className="entry-meta">
+                            Approved:{" "}
+                            {new Date(
+                              entry.approved_at
+                            ).toLocaleString("en-GB")}
+                          </p>
+                        )}
+
+                        {entry.rejected_at && (
+                          <p className="entry-meta">
+                            Rejected:{" "}
+                            {new Date(
+                              entry.rejected_at
+                            ).toLocaleString("en-GB")}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="entry-score-summary">
+                        <div>
+                          <span>Points</span>
+                          <strong>{totalPoints}</strong>
+                        </div>
+
+                        <div>
+                          <span>Exact scores</span>
+                          <strong>{exactScores}</strong>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="payment-actions">
+                      {paymentStatus !== "approved" && (
+                        <form action={approveEntry}>
+                          <input
+                            type="hidden"
+                            name="entry_id"
+                            value={entry.id}
+                          />
+
+                          <input
+                            type="hidden"
+                            name="competition_id"
+                            value={competition.id}
+                          />
+
+                          <button type="submit">
+                            Approve paid entry
+                          </button>
+                        </form>
+                      )}
+
+                      {paymentStatus !== "pending" && (
+                        <form action={markEntryPending}>
+                          <input
+                            type="hidden"
+                            name="entry_id"
+                            value={entry.id}
+                          />
+
+                          <input
+                            type="hidden"
+                            name="competition_id"
+                            value={competition.id}
+                          />
+
+                          <button
+                            className="secondary-button"
+                            type="submit"
+                          >
+                            Mark as pending
+                          </button>
+                        </form>
+                      )}
+
+                      {paymentStatus !== "rejected" && (
+                        <form action={rejectEntry}>
+                          <input
+                            type="hidden"
+                            name="entry_id"
+                            value={entry.id}
+                          />
+
+                          <input
+                            type="hidden"
+                            name="competition_id"
+                            value={competition.id}
+                          />
+
+                          <button
+                            className="danger-button"
+                            type="submit"
+                          >
+                            Reject entry
+                          </button>
+                        </form>
+                      )}
+                    </div>
+
+                    <div className="table-wrapper">
+                      <table className="entries-table">
+                        <thead>
+                          <tr>
+                            <th>Game No.</th>
+                            <th>Fixture</th>
+                            <th>Prediction</th>
+                            <th>Result</th>
+                            <th>Points</th>
+                          </tr>
+                        </thead>
+
+                        <tbody>
+                          {entry.predictions.map(
+                            (prediction) => {
+                              const fixture =
+                                prediction.fixture;
+
+                              const hasResult =
+                                fixture?.home_score !==
+                                  null &&
+                                fixture?.home_score !==
+                                  undefined &&
+                                fixture?.away_score !==
+                                  null &&
+                                fixture?.away_score !==
+                                  undefined;
+
+                              const actualResult = hasResult
+                                ? `${fixture.home_score} - ${fixture.away_score}`
+                                : "Not played";
+
+                              return (
+                                <tr key={prediction.id}>
+                                  <td>
+                                    {fixture?.group_name ??
+                                      ""}
+                                  </td>
+
+                                  <td>
+                                    {fixture
+                                      ? `${fixture.home_team} v ${fixture.away_team}`
+                                      : "Fixture unavailable"}
+                                  </td>
+
+                                  <td>
+                                    {
+                                      prediction.predicted_home_score
+                                    }
+                                    {" - "}
+                                    {
+                                      prediction.predicted_away_score
+                                    }
+                                  </td>
+
+                                  <td>{actualResult}</td>
+
+                                  <td>
+                                    {
+                                      prediction.points_awarded
+                                    }
+
+                                    {prediction.is_exact_score && (
+                                      <span className="exact-badge">
+                                        Exact
+                                      </span>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            }
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <form action={deleteEntry}>
+                      <input
+                        type="hidden"
+                        name="entry_id"
+                        value={entry.id}
+                      />
+
+                      <input
+                        type="hidden"
+                        name="competition_id"
+                        value={competition.id}
+                      />
+
+                      <button
+                        className="danger-button"
+                        type="submit"
+                      >
+                        Delete entry
+                      </button>
+                    </form>
+                  </article>
+                );
+              })}
+            </section>
+          )}
+        </>
       )}
     </main>
   );
