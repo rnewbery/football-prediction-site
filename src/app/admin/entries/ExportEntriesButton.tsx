@@ -45,6 +45,10 @@ function csvEscape(value: string | number | null | undefined) {
   return text;
 }
 
+function excelText(value: string) {
+  return `="${value.replaceAll('"', '""')}"`;
+}
+
 export default function ExportEntriesButton({
   entries,
 }: {
@@ -83,6 +87,8 @@ export default function ExportEntriesButton({
           ? `${fixture.home_team} v ${fixture.away_team}`
           : "Fixture unavailable";
 
+        const predictionText = `${prediction.predicted_home_score} - ${prediction.predicted_away_score}`;
+
         return [
           entry.id,
           entry.participant?.name ?? "Unnamed participant",
@@ -91,8 +97,8 @@ export default function ExportEntriesButton({
           new Date(entry.submitted_at).toLocaleString("en-GB"),
           fixture?.group_name ?? "",
           fixtureName,
-          `${prediction.predicted_home_score} - ${prediction.predicted_away_score}`,
-          actualResult,
+          excelText(predictionText),
+          hasResult ? excelText(actualResult) : actualResult,
           prediction.points_awarded,
           prediction.is_exact_score ? "Yes" : "No",
         ];
