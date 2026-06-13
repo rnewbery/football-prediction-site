@@ -83,6 +83,12 @@ export default async function PreviousCompetitionDetailPage({
   const leaderboard =
     (leaderboardData ?? []) as LeaderboardEntry[];
 
+  const hasPrizes =
+    previousCompetition.first_prize ||
+    previousCompetition.second_prize ||
+    previousCompetition.third_prize ||
+    previousCompetition.prize_notes;
+
   return (
     <main>
       <div className="page-header">
@@ -92,16 +98,23 @@ export default async function PreviousCompetitionDetailPage({
           <h1>{previousCompetition.name}</h1>
 
           <p className="intro">
-            Final leaderboard and competition details.
+            View the archived competition details and final
+            leaderboard.
           </p>
         </div>
 
-        <Link
-          className="button-link secondary"
-          href="/previous-competitions"
-        >
-          Back to previous competitions
-        </Link>
+        <div className="admin-header-actions">
+          <Link
+            className="button-link secondary"
+            href="/previous-competitions"
+          >
+            Back to previous competitions
+          </Link>
+
+          <Link className="button-link secondary" href="/">
+            Back to homepage
+          </Link>
+        </div>
       </div>
 
       <section className="card">
@@ -134,10 +147,7 @@ export default async function PreviousCompetitionDetailPage({
         </div>
       </section>
 
-      {(previousCompetition.first_prize ||
-        previousCompetition.second_prize ||
-        previousCompetition.third_prize ||
-        previousCompetition.prize_notes) && (
+      {hasPrizes && (
         <section className="card">
           <h2>Prizes</h2>
 
@@ -145,6 +155,7 @@ export default async function PreviousCompetitionDetailPage({
             {previousCompetition.first_prize && (
               <div>
                 <span>1st place</span>
+
                 <strong>{previousCompetition.first_prize}</strong>
               </div>
             )}
@@ -152,6 +163,7 @@ export default async function PreviousCompetitionDetailPage({
             {previousCompetition.second_prize && (
               <div>
                 <span>2nd place</span>
+
                 <strong>{previousCompetition.second_prize}</strong>
               </div>
             )}
@@ -159,6 +171,7 @@ export default async function PreviousCompetitionDetailPage({
             {previousCompetition.third_prize && (
               <div>
                 <span>3rd place</span>
+
                 <strong>{previousCompetition.third_prize}</strong>
               </div>
             )}
@@ -176,9 +189,14 @@ export default async function PreviousCompetitionDetailPage({
         <h2>Final leaderboard</h2>
 
         {leaderboard.length === 0 ? (
-          <p>No approved entries were recorded.</p>
+          <p>No approved entries were recorded for this competition.</p>
         ) : (
           <>
+            <p className="form-message">
+              This is the final leaderboard for the archived
+              competition.
+            </p>
+
             <div className="table-wrapper">
               <table className="leaderboard-table">
                 <thead>

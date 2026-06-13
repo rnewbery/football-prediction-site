@@ -17,20 +17,6 @@ type LeaderboardClientProps = {
   prizeNotes: string | null;
 };
 
-function csvEscape(value: string | number | null | undefined) {
-  const text = String(value ?? "");
-
-  if (
-    text.includes(",") ||
-    text.includes('"') ||
-    text.includes("\n")
-  ) {
-    return `"${text.replaceAll('"', '""')}"`;
-  }
-
-  return text;
-}
-
 export default function LeaderboardClient({
   competitionId,
   firstPrize,
@@ -89,44 +75,6 @@ export default function LeaderboardClient({
     setHasUnlocked(true);
     setMessage("");
     setIsLoading(false);
-  }
-
-  function downloadLeaderboardCsv() {
-    const headers = [
-      "Position",
-      "Participant",
-      "Points",
-      "Exact scores",
-    ];
-
-    const rows = leaderboard.map((entry, index) => [
-      index + 1,
-      entry.participant_name,
-      entry.total_points,
-      entry.exact_scores,
-    ]);
-
-    const csvContent = [headers, ...rows]
-      .map((row) => row.map(csvEscape).join(","))
-      .join("\n");
-
-    const blob = new Blob([csvContent], {
-      type: "text/csv;charset=utf-8;",
-    });
-
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `leaderboard-${new Date()
-      .toISOString()
-      .slice(0, 10)}.csv`;
-
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    URL.revokeObjectURL(url);
   }
 
   return (
@@ -256,14 +204,6 @@ export default function LeaderboardClient({
                     onClick={() => window.print()}
                   >
                     Print leaderboard
-                  </button>
-
-                  <button
-                    className="secondary-button"
-                    type="button"
-                    onClick={downloadLeaderboardCsv}
-                  >
-                    Export leaderboard CSV
                   </button>
                 </div>
               </>

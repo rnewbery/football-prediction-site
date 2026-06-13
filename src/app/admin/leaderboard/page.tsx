@@ -9,6 +9,40 @@ type LeaderboardEntry = {
   exact_scores: number;
 };
 
+function csvEscape(value: string | number | null | undefined) {
+  const text = String(value ?? "");
+
+  if (
+    text.includes(",") ||
+    text.includes('"') ||
+    text.includes("\n")
+  ) {
+    return `"${text.replaceAll('"', '""')}"`;
+  }
+
+  return text;
+}
+
+function buildLeaderboardCsv(leaderboard: LeaderboardEntry[]) {
+  const headers = [
+    "Position",
+    "Participant",
+    "Points",
+    "Exact scores",
+  ];
+
+  const rows = leaderboard.map((entry, index) => [
+    index + 1,
+    entry.participant_name,
+    entry.total_points,
+    entry.exact_scores,
+  ]);
+
+  return [headers, ...rows]
+    .map((row) => row.map(csvEscape).join(","))
+    .join("\n");
+}
+
 export default async function AdminLeaderboardPage() {
   const supabase = await createSupabaseServerClient();
 
@@ -54,6 +88,11 @@ export default async function AdminLeaderboardPage() {
       leaderboard = data ?? [];
     }
   }
+
+  const csvContent = buildLeaderboardCsv(leaderboard);
+  const csvDownloadHref = `data:text/csv;charset=utf-8,${encodeURIComponent(
+    csvContent
+  )}`;
 
   return (
     <main>
@@ -124,6 +163,16 @@ export default async function AdminLeaderboardPage() {
 
             <div className="form-actions">
               <PrintButton />
+
+              <a
+                className="button-link secondary"
+                href={csvDownloadHref}
+                download={`leaderboard-${competition.name
+                  .toLowerCase()
+                  .replaceAll(" ", "-")}.csv`}
+              >
+                Export leaderboard CSV
+              </a>
             </div>
           </>
         )}

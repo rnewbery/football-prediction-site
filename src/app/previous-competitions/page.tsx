@@ -13,7 +13,10 @@ export default async function PreviousCompetitionsPage() {
     .from("competitions")
     .select("id, name, entry_cost, closing_date")
     .eq("is_active", false)
-    .order("closing_date", { ascending: false });
+    .order("closing_date", {
+      ascending: false,
+      nullsFirst: false,
+    });
 
   if (error) {
     console.error(
@@ -34,7 +37,8 @@ export default async function PreviousCompetitionsPage() {
           <h1>Previous competitions</h1>
 
           <p className="intro">
-            View completed competitions and past results.
+            View completed competitions, final leaderboards and past
+            results.
           </p>
         </div>
 
@@ -50,12 +54,16 @@ export default async function PreviousCompetitionsPage() {
       ) : (
         <section className="archive-list">
           {previousCompetitions.map((competition) => (
-            <article className="card archive-card" key={competition.id}>
+            <article
+              className="card archive-card"
+              key={competition.id}
+            >
               <h2>{competition.name}</h2>
 
               <div className="competition-details">
                 <div>
                   <span>Entry cost</span>
+
                   <strong>
                     {competition.entry_cost !== null
                       ? `£${Number(competition.entry_cost).toFixed(2)}`
@@ -65,6 +73,7 @@ export default async function PreviousCompetitionsPage() {
 
                 <div>
                   <span>Closed</span>
+
                   <strong>
                     {competition.closing_date
                       ? new Date(
@@ -76,13 +85,13 @@ export default async function PreviousCompetitionsPage() {
               </div>
 
               <div className="form-actions">
-  <Link
-    className="button-link secondary"
-    href={`/previous-competitions/${competition.id}`}
-  >
-    View final leaderboard
-  </Link>
-</div>
+                <Link
+                  className="button-link secondary"
+                  href={`/previous-competitions/${competition.id}`}
+                >
+                  View final leaderboard
+                </Link>
+              </div>
             </article>
           ))}
         </section>
