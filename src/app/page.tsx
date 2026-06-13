@@ -13,7 +13,9 @@ export default async function Home() {
     console.error("Unable to load competition:", error.message);
   }
 
-  const competitionName = competition?.name ?? "No active competition";
+  const competitionName =
+    competition?.name ?? "No active competition";
+
   const entryCost = competition
     ? `£${Number(competition.entry_cost).toFixed(2)}`
     : "Not available";
@@ -24,14 +26,20 @@ export default async function Home() {
 
   return (
     <main>
+      <div className="public-top-bar">
+        <Link className="admin-portal-link" href="/admin">
+          Admin Portal
+        </Link>
+      </div>
+
       <section className="hero">
-        <p className="eyebrow">Gary's Football Comps</p>
+        <p className="eyebrow">Gary&apos;s Football Comps</p>
 
         <h1>Predict the scores. Follow the leaderboard.</h1>
 
         <p className="intro">
-          Enter your predictions for the current competition and see how you
-          compare once the results begin.
+          Enter your predictions for the current competition and
+          see how you compare once the results begin.
         </p>
 
         <div className="actions">
@@ -39,8 +47,18 @@ export default async function Home() {
             Enter predictions
           </Link>
 
-          <Link className="button-link secondary" href="/leaderboard">
+          <Link
+            className="button-link secondary"
+            href="/leaderboard"
+          >
             View leaderboard
+          </Link>
+
+          <Link
+            className="button-link secondary"
+            href="/previous-competitions"
+          >
+            Previous competitions
           </Link>
         </div>
       </section>

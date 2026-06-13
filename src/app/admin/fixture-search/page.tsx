@@ -6,48 +6,76 @@ import FixtureSearchClient from "./FixtureSearchClient";
 type LocalFixture = {
   id: number;
   fixture_label: string | null;
+  kickoff_at: string | null;
+  kickoff_sort_key: string | null;
   group_name: string | null;
   home_team: string;
   away_team: string;
   external_fixture_id: number | null;
 };
 
-export default async function FixtureSearchPage({
-  searchParams,
-}: {
+type FixtureSearchPageProps = {
   searchParams?: Promise<{
     success?: string;
     error?: string;
+    date_from?: string;
+    date_to?: string;
+    competition_filter?: string;
   }>;
-}) {
-  const supabase = await createSupabaseServerClient();
+};
 
+export default async function FixtureSearchPage({
+  searchParams,
+}: FixtureSearchPageProps) {
+  const supabase = await createSupabaseServerClient();
   const resolvedSearchParams = await searchParams;
 
   const {
     data: { user },
+    error: userError,
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (userError || !user) {
     redirect("/admin/login");
   }
 
-  const { data: competition } = await supabase
-    .from("competitions")
-    .select("id, name")
-    .eq("is_active", true)
-    .limit(1)
-    .maybeSingle();
+  const { data: competition, error: competitionError } =
+    await supabase
+      .from("competitions")
+      .select("id, name")
+      .eq("is_active", true)
+      .limit(1)
+      .maybeSingle();
+
+  if (competitionError) {
+    console.error(
+      "Unable to load active competition:",
+      competitionError.message
+    );
+  }
 
   const { data: fixtures, error: fixturesError } =
     competition
       ? await supabase
           .from("fixtures")
           .select(
-            "id, fixture_label, group_name, home_team, away_team, external_fixture_id"
+            `
+              id,
+              fixture_label,
+              kickoff_at,
+              kickoff_sort_key,
+              group_name,
+              home_team,
+              away_team,
+              external_fixture_id
+            `
           )
           .eq("competition_id", competition.id)
-          .order("group_name", { ascending: true })
+          .order("kickoff_sort_key", {
+            ascending: true,
+            nullsFirst: false,
+          })
+          .order("id", { ascending: true })
       : { data: [], error: null };
 
   if (fixturesError) {
@@ -66,15 +94,12 @@ export default async function FixtureSearchPage({
           <h1>Search football fixtures</h1>
 
           <p className="intro">
-            Search API-Football by date, find the correct
-            match, then link it to one of your own fixtures.
+            Search API-Football across a date range, find the
+            correct matches, then link them to your local fixtures.
           </p>
         </div>
 
-        <Link
-          className="button-link secondary"
-          href="/admin"
-        >
+        <Link className="button-link secondary" href="/admin">
           Back to dashboard
         </Link>
       </div>
@@ -98,6 +123,12 @@ export default async function FixtureSearchPage({
       ) : (
         <FixtureSearchClient
           localFixtures={(fixtures ?? []) as LocalFixture[]}
+          initialDateFrom={resolvedSearchParams?.date_from ?? ""}
+          initialDateTo={resolvedSearchParams?.date_to ?? ""}
+          initialCompetitionFilter={
+            resolvedSearchParams?.competition_filter ??
+            "premier-league-and-world-cup"
+          }
         />
       )}
     </main>

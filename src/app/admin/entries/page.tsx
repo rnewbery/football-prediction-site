@@ -70,9 +70,10 @@ export default async function EntriesPage({
 
   const {
     data: { user },
+    error: userError,
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (userError || !user) {
     redirect("/admin/login");
   }
 
@@ -94,7 +95,8 @@ export default async function EntriesPage({
   const { data, error: entriesError } = competition
     ? await supabase
         .from("entries")
-        .select(`
+        .select(
+          `
           id,
           submitted_at,
           payment_status,
@@ -119,7 +121,8 @@ export default async function EntriesPage({
               away_score
             )
           )
-        `)
+        `
+        )
         .eq("competition_id", competition.id)
         .order("submitted_at", { ascending: false })
     : { data: [], error: null };
@@ -161,10 +164,7 @@ export default async function EntriesPage({
           </p>
         </div>
 
-        <Link
-          className="button-link secondary"
-          href="/admin"
-        >
+        <Link className="button-link secondary" href="/admin">
           Back to dashboard
         </Link>
       </div>
@@ -188,17 +188,18 @@ export default async function EntriesPage({
       ) : (
         <>
           <section className="card">
-  <h2>Export entries</h2>
+            <h2>Export entries</h2>
 
-  <p>
-    Download all participant entries and predictions as a CSV file
-    for Excel.
-  </p>
+            <p>
+              Download all participant entries and predictions as a
+              CSV file for Excel.
+            </p>
 
-  <div className="form-actions">
-    <ExportEntriesButton entries={entries} />
-  </div>
-</section>
+            <div className="form-actions">
+              <ExportEntriesButton entries={entries} />
+            </div>
+          </section>
+
           <section className="admin-summary-grid">
             <article className="card admin-summary-card">
               <span>Pending payment</span>
@@ -244,7 +245,14 @@ export default async function EntriesPage({
                   >
                     <div className="entry-header">
                       <div>
-                        <h2>
+                        <h2 className="entry-name-with-status">
+                          <span
+                            className={`payment-status-dot payment-status-${paymentStatus}`}
+                            title={paymentStatusLabel(
+                              paymentStatus
+                            )}
+                          />
+
                           {entry.participant?.name ??
                             "Unnamed participant"}
                         </h2>
@@ -269,9 +277,7 @@ export default async function EntriesPage({
                         <p className="entry-meta">
                           Payment status:{" "}
                           <strong>
-                            {paymentStatusLabel(
-                              paymentStatus
-                            )}
+                            {paymentStatusLabel(paymentStatus)}
                           </strong>
                         </p>
 
@@ -410,8 +416,7 @@ export default async function EntriesPage({
                               return (
                                 <tr key={prediction.id}>
                                   <td>
-                                    {fixture?.group_name ??
-                                      ""}
+                                    {fixture?.group_name ?? ""}
                                   </td>
 
                                   <td>

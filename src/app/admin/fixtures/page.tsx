@@ -23,9 +23,10 @@ export default async function FixturesPage({
 
   const {
     data: { user },
+    error: userError,
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (userError || !user) {
     redirect("/admin/login");
   }
 
@@ -49,6 +50,8 @@ export default async function FixturesPage({
             `
               id,
               fixture_label,
+              kickoff_at,
+              kickoff_sort_key,
               group_name,
               home_team,
               away_team,
@@ -60,6 +63,10 @@ export default async function FixturesPage({
             `
           )
           .eq("competition_id", competition.id)
+          .order("kickoff_sort_key", {
+            ascending: true,
+            nullsFirst: false,
+          })
           .order("id", { ascending: true })
       : { data: [], error: null };
 
@@ -77,14 +84,11 @@ export default async function FixturesPage({
 
           <p className="intro">
             Add fixtures, correct team details, enter match results
-            and check whether fixtures are linked to API-Football.
+            and manage API-Football fixture links.
           </p>
         </div>
 
-        <Link
-          className="button-link secondary"
-          href="/admin"
-        >
+        <Link className="button-link secondary" href="/admin">
           Back to dashboard
         </Link>
       </div>
@@ -119,16 +123,21 @@ export default async function FixturesPage({
 
               <div className="fixture-form-grid">
                 <div>
-                  <label htmlFor="new-fixture-label">
-                    Date or label
+                  <label htmlFor="new-kickoff-at">
+                    Kickoff date/time
                   </label>
 
                   <input
-                    id="new-fixture-label"
-                    name="fixture_label"
+                    id="new-kickoff-at"
+                    name="kickoff_at"
                     type="text"
-                    placeholder="Thu 11 June"
+                    placeholder="11 Jun 2026 20:00"
+                    required
                   />
+
+                  <p className="input-help">
+                    Use this format: 11 Jun 2026 20:00
+                  </p>
                 </div>
 
                 <div>
@@ -141,6 +150,7 @@ export default async function FixturesPage({
                     name="game_number"
                     type="text"
                     placeholder="1"
+                    required
                   />
                 </div>
 
@@ -169,6 +179,26 @@ export default async function FixturesPage({
                     required
                   />
                 </div>
+
+                <div>
+                  <label htmlFor="new-external-fixture-id">
+                    API fixture ID optional
+                  </label>
+
+                  <input
+                    id="new-external-fixture-id"
+                    name="external_fixture_id"
+                    type="number"
+                    min="1"
+                    step="1"
+                    placeholder="e.g. 66456904"
+                  />
+
+                  <p className="input-help">
+                    Leave blank if this fixture is not linked to
+                    API-Football.
+                  </p>
+                </div>
               </div>
 
               <div className="form-actions">
@@ -196,28 +226,29 @@ export default async function FixturesPage({
                       key={fixture.id}
                     >
                       <div className="form-message">
-  API fixture ID:{" "}
-  <strong>
-    {fixture.external_fixture_id ?? "Not linked"}
-  </strong>
+                        API fixture ID:{" "}
+                        <strong>
+                          {fixture.external_fixture_id ??
+                            "Not linked"}
+                        </strong>
 
-  {fixture.external_fixture_id && (
-    <form action={unlinkApiFixture}>
-      <input
-        type="hidden"
-        name="fixture_id"
-        value={fixture.id}
-      />
+                        {fixture.external_fixture_id && (
+                          <form action={unlinkApiFixture}>
+                            <input
+                              type="hidden"
+                              name="fixture_id"
+                              value={fixture.id}
+                            />
 
-      <button
-        className="secondary-button"
-        type="submit"
-      >
-        Unlink API fixture
-      </button>
-    </form>
-  )}
-</div>
+                            <button
+                              className="secondary-button"
+                              type="submit"
+                            >
+                              Unlink API fixture
+                            </button>
+                          </form>
+                        )}
+                      </div>
 
                       <form action={updateFixture}>
                         <input
@@ -235,19 +266,27 @@ export default async function FixturesPage({
                         <div className="fixture-edit-grid">
                           <div>
                             <label
-                              htmlFor={`fixture-label-${fixture.id}`}
+                              htmlFor={`kickoff-at-${fixture.id}`}
                             >
-                              Date or label
+                              Kickoff date/time
                             </label>
 
                             <input
-                              id={`fixture-label-${fixture.id}`}
-                              name="fixture_label"
+                              id={`kickoff-at-${fixture.id}`}
+                              name="kickoff_at"
                               type="text"
                               defaultValue={
-                                fixture.fixture_label ?? ""
+                                fixture.kickoff_at ??
+                                fixture.fixture_label ??
+                                ""
                               }
+                              placeholder="11 Jun 2026 20:00"
+                              required
                             />
+
+                            <p className="input-help">
+                              Use this format: 11 Jun 2026 20:00
+                            </p>
                           </div>
 
                           <div>
@@ -264,6 +303,7 @@ export default async function FixturesPage({
                               defaultValue={
                                 fixture.group_name ?? ""
                               }
+                              required
                             />
                           </div>
 
@@ -297,6 +337,31 @@ export default async function FixturesPage({
                               defaultValue={fixture.away_team}
                               required
                             />
+                          </div>
+
+                          <div>
+                            <label
+                              htmlFor={`external-fixture-id-${fixture.id}`}
+                            >
+                              API fixture ID optional
+                            </label>
+
+                            <input
+                              id={`external-fixture-id-${fixture.id}`}
+                              name="external_fixture_id"
+                              type="number"
+                              min="1"
+                              step="1"
+                              defaultValue={
+                                fixture.external_fixture_id ?? ""
+                              }
+                              placeholder="e.g. 66456904"
+                            />
+
+                            <p className="input-help">
+                              Paste the API-Football fixture ID
+                              here, or leave blank if unlinked.
+                            </p>
                           </div>
 
                           <div>

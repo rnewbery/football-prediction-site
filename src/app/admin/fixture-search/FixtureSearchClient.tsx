@@ -12,6 +12,8 @@ type CompetitionKey =
 type LocalFixture = {
   id: number;
   fixture_label: string | null;
+  kickoff_at: string | null;
+  kickoff_sort_key: string | null;
   group_name: string | null;
   home_team: string;
   away_team: string;
@@ -67,17 +69,39 @@ type FixtureApiResponse = {
   response?: ApiFixture[];
 };
 
+type FixtureSearchClientProps = {
+  localFixtures: LocalFixture[];
+  initialDateFrom: string;
+  initialDateTo: string;
+  initialCompetitionFilter: string;
+};
+
+function formatApiKickoff(value: string) {
+  return new Date(value).toLocaleString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "Europe/London",
+  });
+}
+
 export default function FixtureSearchClient({
   localFixtures,
-}: {
-  localFixtures: LocalFixture[];
-}) {
+  initialDateFrom,
+  initialDateTo,
+  initialCompetitionFilter,
+}: FixtureSearchClientProps) {
   const [competition, setCompetition] =
     useState<CompetitionKey>(
-      "premier-league-and-world-cup"
+      (initialCompetitionFilter as CompetitionKey) ||
+        "premier-league-and-world-cup"
     );
 
-  const [date, setDate] = useState("");
+  const [dateFrom, setDateFrom] = useState(initialDateFrom);
+  const [dateTo, setDateTo] = useState(initialDateTo);
   const [fixtures, setFixtures] = useState<ApiFixture[]>([]);
   const [message, setMessage] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -87,8 +111,13 @@ export default function FixtureSearchClient({
   ) {
     event.preventDefault();
 
-    if (!date) {
-      setMessage("Choose a date first.");
+    if (!dateFrom || !dateTo) {
+      setMessage("Choose a date from and date to first.");
+      return;
+    }
+
+    if (dateFrom > dateTo) {
+      setMessage("Date from cannot be later than date to.");
       return;
     }
 
@@ -98,9 +127,16 @@ export default function FixtureSearchClient({
 
     try {
       const parameters = new URLSearchParams({
-        date,
-        competition,
+        date_from: dateFrom,
+        date_to: dateTo,
+        competition_filter: competition,
       });
+
+      window.history.replaceState(
+        null,
+        "",
+        `/admin/fixture-search?${parameters.toString()}`
+      );
 
       const response = await fetch(
         `/api/football-fixtures?${parameters.toString()}`
@@ -179,25 +215,38 @@ export default function FixtureSearchClient({
             </div>
 
             <div>
-              <label htmlFor="fixture-search-date">
-                Match date
+              <label htmlFor="fixture-search-date-from">
+                Date from
               </label>
 
               <input
-                id="fixture-search-date"
+                id="fixture-search-date-from"
                 type="date"
-                value={date}
+                value={dateFrom}
                 onChange={(event) =>
-                  setDate(event.target.value)
+                  setDateFrom(event.target.value)
                 }
                 required
               />
             </div>
 
-            <button
-              type="submit"
-              disabled={isSearching}
-            >
+            <div>
+              <label htmlFor="fixture-search-date-to">
+                Date to
+              </label>
+
+              <input
+                id="fixture-search-date-to"
+                type="date"
+                value={dateTo}
+                onChange={(event) =>
+                  setDateTo(event.target.value)
+                }
+                required
+              />
+            </div>
+
+            <button type="submit" disabled={isSearching}>
               {isSearching
                 ? "Searching..."
                 : "Search fixtures"}
@@ -208,18 +257,19 @@ export default function FixtureSearchClient({
         {message && (
           <p className="form-message">{message}</p>
         )}
+
+        <p className="input-help">
+          Search a period rather than a single date, then link
+          several API matches without starting again.
+        </p>
       </section>
 
       {fixtures.length > 0 && (
         <section className="fixture-search-results">
           {fixtures.map((result) => {
-            const kickoff = new Date(
+            const kickoff = formatApiKickoff(
               result.fixture.date
-            ).toLocaleString("en-GB", {
-              dateStyle: "medium",
-              timeStyle: "short",
-              timeZone: "Europe/London",
-            });
+            );
 
             const hasScore =
               result.goals.home !== null &&
@@ -255,9 +305,7 @@ export default function FixtureSearchClient({
                   <div className="api-fixture-id">
                     <span>Fixture ID</span>
 
-                    <strong>
-                      {result.fixture.id}
-                    </strong>
+                    <strong>{result.fixture.id}</strong>
                   </div>
                 </div>
 
@@ -330,6 +378,24 @@ export default function FixtureSearchClient({
                         value={result.fixture.id}
                       />
 
+                      <input
+                        type="hidden"
+                        name="date_from"
+                        value={dateFrom}
+                      />
+
+                      <input
+                        type="hidden"
+                        name="date_to"
+                        value={dateTo}
+                      />
+
+                      <input
+                        type="hidden"
+                        name="competition_filter"
+                        value={competition}
+                      />
+
                       <label
                         htmlFor={`local-fixture-${result.fixture.id}`}
                       >
@@ -354,6 +420,9 @@ export default function FixtureSearchClient({
                             >
                               {fixture.group_name
                                 ? `Game ${fixture.group_name}: `
+                                : ""}
+                              {fixture.kickoff_at
+                                ? `${fixture.kickoff_at} — `
                                 : ""}
                               {fixture.home_team} v{" "}
                               {fixture.away_team}

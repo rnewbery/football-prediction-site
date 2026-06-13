@@ -6,6 +6,8 @@ import { supabase } from "@/lib/supabase";
 type Fixture = {
   id: number;
   fixture_label: string | null;
+  kickoff_at: string | null;
+  kickoff_sort_key: string | null;
   group_name: string | null;
   home_team: string;
   away_team: string;
@@ -199,7 +201,7 @@ export default function PredictionForm({
           <table className="fixtures-table">
             <thead>
               <tr>
-                <th>Date</th>
+                <th>Date / time</th>
                 <th>Game No.</th>
                 <th>Home team</th>
                 <th>Home</th>
@@ -211,7 +213,7 @@ export default function PredictionForm({
             <tbody>
               {fixtures.map((fixture) => (
                 <tr key={fixture.id}>
-                  <td>{fixture.fixture_label}</td>
+                  <td>{fixture.kickoff_at ?? fixture.fixture_label}</td>
                   <td>{fixture.group_name}</td>
                   <td>{fixture.home_team}</td>
 
