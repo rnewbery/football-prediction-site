@@ -10,6 +10,35 @@ type SettingsPageProps = {
   }>;
 };
 
+function formatDateTimeLocalUk(value: string | null) {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(date);
+
+  const getPart = (type: string) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+
+  const year = getPart("year");
+  const month = getPart("month");
+  const day = getPart("day");
+  const hour = getPart("hour");
+  const minute = getPart("minute");
+
+  return `${year}-${month}-${day}T${hour}:${minute}`;
+}
+
 export default async function SettingsPage({
   searchParams,
 }: SettingsPageProps) {
@@ -44,11 +73,9 @@ export default async function SettingsPage({
     .limit(1)
     .maybeSingle();
 
-  const closingDateValue = competition?.closing_date
-    ? new Date(competition.closing_date)
-        .toISOString()
-        .slice(0, 16)
-    : "";
+  const closingDateValue = formatDateTimeLocalUk(
+    competition?.closing_date ?? null
+  );
 
   return (
     <main>
