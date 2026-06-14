@@ -83,8 +83,8 @@ export default async function FixturesPage({
           <h1>Manage fixtures and results</h1>
 
           <p className="intro">
-            Add fixtures, correct team details, enter match results
-            and manage API-Football fixture links.
+            Add fixtures, assign each game to a week, enter match
+            results and manage API-Football fixture links.
           </p>
         </div>
 
@@ -142,16 +142,20 @@ export default async function FixturesPage({
 
                 <div>
                   <label htmlFor="new-game-number">
-                    Game No.
+                    Week / group
                   </label>
 
                   <input
                     id="new-game-number"
                     name="game_number"
                     type="text"
-                    placeholder="1"
+                    placeholder="Week 1"
                     required
                   />
+
+                  <p className="input-help">
+                    Use Week 1, Week 2, Week 3 or Week 4.
+                  </p>
                 </div>
 
                 <div>
@@ -293,7 +297,7 @@ export default async function FixturesPage({
                             <label
                               htmlFor={`game-number-${fixture.id}`}
                             >
-                              Game No.
+                              Week / group
                             </label>
 
                             <input
@@ -303,8 +307,13 @@ export default async function FixturesPage({
                               defaultValue={
                                 fixture.group_name ?? ""
                               }
+                              placeholder="Week 1"
                               required
                             />
+
+                            <p className="input-help">
+                              Use Week 1, Week 2, Week 3 or Week 4.
+                            </p>
                           </div>
 
                           <div>

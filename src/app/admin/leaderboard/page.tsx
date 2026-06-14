@@ -9,7 +9,59 @@ type LeaderboardEntry = {
   exact_scores: number;
 };
 
-function csvEscape(value: string | number | null | undefined) {
+type GameBreakdownEntry = {
+  group_name: string;
+  fixture_id: number;
+  fixture_label: string;
+  fixture_sort_key: string;
+  fixture_date: string | null;
+  participant_name: string;
+  predicted_score: string;
+  actual_score: string;
+  points_awarded: number;
+  is_exact_score: boolean;
+};
+
+function formatPosition(position: number) {
+  const lastTwoDigits = position % 100;
+  const lastDigit = position % 10;
+
+  if (lastTwoDigits >= 11 && lastTwoDigits <= 13) {
+    return `${position}th`;
+  }
+
+  if (lastDigit === 1) {
+    return `${position}st`;
+  }
+
+  if (lastDigit === 2) {
+    return `${position}nd`;
+  }
+
+  if (lastDigit === 3) {
+    return `${position}rd`;
+  }
+
+  return `${position}th`;
+}
+
+function getPositionClass(index: number) {
+  if (index === 0) {
+    return "position-badge position-first";
+  }
+
+  if (index === 1) {
+    return "position-badge position-second";
+  }
+
+  if (index === 2) {
+    return "position-badge position-third";
+  }
+
+  return "position-badge";
+}
+
+function csvEscape(value: string | number | boolean | null | undefined) {
   const text = String(value ?? "");
 
   if (
@@ -23,24 +75,71 @@ function csvEscape(value: string | number | null | undefined) {
   return text;
 }
 
-function buildLeaderboardCsv(leaderboard: LeaderboardEntry[]) {
-  const headers = [
+function buildCombinedCsv(
+  leaderboard: LeaderboardEntry[],
+  gameBreakdown: GameBreakdownEntry[]
+) {
+  const leaderboardHeaders = [
     "Position",
     "Participant",
     "Points",
     "Exact scores",
   ];
 
-  const rows = leaderboard.map((entry, index) => [
-    index + 1,
+  const leaderboardRows = leaderboard.map((entry, index) => [
+    formatPosition(index + 1),
     entry.participant_name,
     entry.total_points,
     entry.exact_scores,
   ]);
 
-  return [headers, ...rows]
+  const breakdownHeaders = [
+    "Week / Group",
+    "Fixture",
+    "Participant",
+    "Prediction",
+    "Result",
+    "Points",
+    "Exact score",
+  ];
+
+  const breakdownRows = gameBreakdown.map((entry) => [
+    entry.group_name,
+    entry.fixture_label,
+    entry.participant_name,
+    entry.predicted_score,
+    entry.actual_score || "Not entered",
+    entry.points_awarded,
+    entry.is_exact_score ? "Yes" : "No",
+  ]);
+
+  return [
+    ["Main leaderboard"],
+    leaderboardHeaders,
+    ...leaderboardRows,
+    [],
+    ["Game breakdown"],
+    breakdownHeaders,
+    ...breakdownRows,
+  ]
     .map((row) => row.map(csvEscape).join(","))
     .join("\n");
+}
+
+function groupBreakdownByGroup(gameBreakdown: GameBreakdownEntry[]) {
+  return gameBreakdown.reduce<
+    Record<string, GameBreakdownEntry[]>
+  >((groups, entry) => {
+    const groupName = entry.group_name || "Ungrouped";
+
+    if (!groups[groupName]) {
+      groups[groupName] = [];
+    }
+
+    groups[groupName].push(entry);
+
+    return groups;
+  }, {});
 }
 
 export default async function AdminLeaderboardPage() {
@@ -70,6 +169,7 @@ export default async function AdminLeaderboardPage() {
   }
 
   let leaderboard: LeaderboardEntry[] = [];
+  let gameBreakdown: GameBreakdownEntry[] = [];
 
   if (competition) {
     const { data, error } = await supabase.rpc(
@@ -87,9 +187,26 @@ export default async function AdminLeaderboardPage() {
     } else {
       leaderboard = data ?? [];
     }
+
+    const { data: breakdownData, error: breakdownError } =
+      await supabase.rpc("get_competition_game_breakdown", {
+        p_competition_id: competition.id,
+      });
+
+    if (breakdownError) {
+      console.error(
+        "Unable to load game breakdown:",
+        breakdownError.message
+      );
+    } else {
+      gameBreakdown = breakdownData ?? [];
+    }
   }
 
-  const csvContent = buildLeaderboardCsv(leaderboard);
+  const groupedBreakdown = groupBreakdownByGroup(gameBreakdown);
+
+  const csvContent = buildCombinedCsv(leaderboard, gameBreakdown);
+
   const csvDownloadHref = `data:text/csv;charset=utf-8,${encodeURIComponent(
     csvContent
   )}`;
@@ -103,35 +220,24 @@ export default async function AdminLeaderboardPage() {
           <h1>Leaderboard</h1>
 
           <p className="intro">
-            View the approved leaderboard without entering the
-            public access code.
+            View, print and export the competition leaderboard.
           </p>
         </div>
 
-        <Link
-          className="button-link secondary"
-          href="/admin"
-        >
+        <Link className="button-link secondary" href="/admin">
           Back to dashboard
         </Link>
       </div>
 
       <section className="card">
-        <h2>{competition?.name ?? "Current competition"}</h2>
+        <h2>Main leaderboard</h2>
 
         {!competition ? (
           <p>No active competition is available.</p>
         ) : leaderboard.length === 0 ? (
-          <p>
-            No approved entries are available yet. Entries only
-            appear here once they have been approved as paid.
-          </p>
+          <p>No leaderboard entries are available yet.</p>
         ) : (
           <>
-            <p className="form-message">
-              Only approved / paid entries are shown.
-            </p>
-
             <div className="table-wrapper">
               <table className="leaderboard-table">
                 <thead>
@@ -149,7 +255,9 @@ export default async function AdminLeaderboardPage() {
                       key={`${entry.participant_name}-${index}`}
                     >
                       <td>
-                        <strong>{index + 1}</strong>
+                        <span className={getPositionClass(index)}>
+                          {formatPosition(index + 1)}
+                        </span>
                       </td>
 
                       <td>{entry.participant_name}</td>
@@ -177,6 +285,59 @@ export default async function AdminLeaderboardPage() {
           </>
         )}
       </section>
+
+      {competition && (
+        <section className="card">
+          <h2>Game breakdown</h2>
+
+          {gameBreakdown.length === 0 ? (
+            <p>No game breakdown is available yet.</p>
+          ) : (
+            Object.entries(groupedBreakdown).map(
+              ([groupName, entries]) => (
+                <div key={groupName}>
+                  <h3>{groupName}</h3>
+
+                  <div className="table-wrapper">
+                    <table className="leaderboard-table">
+                      <thead>
+                        <tr>
+                          <th>Fixture</th>
+                          <th>Participant</th>
+                          <th>Prediction</th>
+                          <th>Result</th>
+                          <th>Points</th>
+                          <th>Exact</th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {entries.map((entry) => (
+                          <tr
+                            key={`${entry.fixture_id}-${entry.participant_name}`}
+                          >
+                            <td>{entry.fixture_label}</td>
+                            <td>{entry.participant_name}</td>
+                            <td>{entry.predicted_score}</td>
+                            <td>
+                              {entry.actual_score ||
+                                "Not entered"}
+                            </td>
+                            <td>{entry.points_awarded}</td>
+                            <td>
+                              {entry.is_exact_score ? "Yes" : "No"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )
+            )
+          )}
+        </section>
+      )}
     </main>
   );
 }
