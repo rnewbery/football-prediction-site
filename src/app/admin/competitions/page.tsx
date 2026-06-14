@@ -341,7 +341,7 @@ export default async function CompetitionsAdminPage({
                     className="button-link secondary"
                     href={`/previous-competitions/${competition.id}`}
                   >
-                    View public archive
+                    View
                   </Link>
 
                   <form action={deleteArchivedCompetition}>
@@ -355,7 +355,7 @@ export default async function CompetitionsAdminPage({
                       className="danger-button"
                       type="submit"
                     >
-                      Delete archived competition
+                      Delete
                     </button>
                   </form>
                 </div>
