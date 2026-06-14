@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import PrintButton from "@/app/leaderboard/PrintButton";
+export const dynamic = "force-dynamic";
 
 type PreviousCompetitionPageProps = {
   params: Promise<{
