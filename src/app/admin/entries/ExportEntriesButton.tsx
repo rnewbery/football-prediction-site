@@ -61,7 +61,7 @@ export default function ExportEntriesButton({
       "Email",
       "Payment status",
       "Submitted",
-      "Game No.",
+      "Week no.",
       "Fixture",
       "Prediction",
       "Actual result",

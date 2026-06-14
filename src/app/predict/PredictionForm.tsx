@@ -202,11 +202,11 @@ export default function PredictionForm({
             <thead>
               <tr>
                 <th>Date / time</th>
-                <th>Game No.</th>
-                <th>Home team</th>
-                <th>Home</th>
-                <th>Away</th>
-                <th>Away team</th>
+                <th>Week No.</th>
+                <th>Home Team</th>
+                <th>Home Score</th>
+                <th>Away Score</th>
+                <th>Away Team</th>
               </tr>
             </thead>
 

@@ -385,7 +385,7 @@ export default async function EntriesPage({
                       <table className="entries-table">
                         <thead>
                           <tr>
-                            <th>Game No.</th>
+                            <th>Week No.</th>
                             <th>Fixture</th>
                             <th>Prediction</th>
                             <th>Result</th>

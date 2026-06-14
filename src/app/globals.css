@@ -42,7 +42,7 @@ p {
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #2563eb;
+  color: #5b89eb;
 }
 
 .hero h1 {
@@ -72,7 +72,7 @@ button {
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
-  background: #2563eb;
+  background: #5678c2;
   color: white;
 }
 
@@ -958,4 +958,30 @@ textarea {
 
 .admin-summary-card strong {
   color: #0f172a;
+}
+.position-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  background: #f3f4f6;
+  color: #111827;
+  font-weight: 700;
+}
+
+.position-first {
+  background: #80bb97;
+  color: #0e0c0a;
+}
+
+.position-second {
+  background: #96aedd;
+  color: #0c0c0a;
+}
+
+.position-third {
+  background: hsl(62, 46%, 73%);
+  color: #080707;
 }

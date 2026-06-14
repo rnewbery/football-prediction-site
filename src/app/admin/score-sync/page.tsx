@@ -156,7 +156,7 @@ export default async function ScoreSyncPage({
                 <thead>
                   <tr>
                     <th>ID</th>
-                    <th>Game No.</th>
+                    <th>Week No.</th>
                     <th>Fixture</th>
                     <th>Current score</th>
                     <th>Status</th>

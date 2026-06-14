@@ -83,7 +83,7 @@ function buildCombinedCsv(
     "Position",
     "Participant",
     "Points",
-    "Exact scores",
+    "Exact Scores",
   ];
 
   const leaderboardRows = leaderboard.map((entry, index) => [

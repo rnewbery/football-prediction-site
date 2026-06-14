@@ -285,7 +285,7 @@ export default function LeaderboardClient({
         <>
           {hasPrizes && (
             <section className="card">
-              <h2>Competition prizes</h2>
+              <h2>Competition Prizes</h2>
 
               <div className="competition-details">
                 {firstPrize && (
@@ -317,7 +317,7 @@ export default function LeaderboardClient({
           )}
 
           <section className="card">
-            <h2>Main leaderboard</h2>
+            <h2>Main Leaderboard</h2>
 
             {leaderboard.length === 0 ? (
               <p>No leaderboard entries are available yet.</p>
@@ -330,7 +330,7 @@ export default function LeaderboardClient({
                         <th>Position</th>
                         <th>Participant</th>
                         <th>Total Points</th>
-                        <th>Exact scores</th>
+                        <th>Exact Scores</th>
                       </tr>
                     </thead>
 
@@ -376,7 +376,7 @@ export default function LeaderboardClient({
           </section>
 
           <section className="card">
-            <h2>Game breakdown</h2>
+            <h2>Game Breakdown</h2>
 
             {gameBreakdown.length === 0 ? (
               <p>No game breakdown is available yet.</p>
