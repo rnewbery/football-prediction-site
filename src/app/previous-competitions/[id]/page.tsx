@@ -194,8 +194,7 @@ export default async function PreviousCompetitionDetailPage({
         ) : (
           <>
             <p className="form-message">
-              This is the final leaderboard for the archived
-              competition.
+              Final leaderboard for this competition.
             </p>
 
             <div className="table-wrapper">
