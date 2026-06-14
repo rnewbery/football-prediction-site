@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from "@/lib/supabase-server";
 import {
   archiveCurrentCompetition,
   createCompetition,
+  deleteArchivedCompetition,
 } from "./actions";
 
 type CompetitionsAdminPageProps = {
@@ -57,8 +58,10 @@ export default async function CompetitionsAdminPage({
       .from("competitions")
       .select("id, name, closing_date")
       .eq("is_active", false)
-      .order("closing_date", { ascending: false })
-      .limit(5);
+      .order("closing_date", {
+        ascending: false,
+        nullsFirst: false,
+      });
 
   if (previousError) {
     console.error(
@@ -76,8 +79,8 @@ export default async function CompetitionsAdminPage({
           <h1>Competitions</h1>
 
           <p className="intro">
-            Archive finished competitions and create new active
-            competitions.
+            Archive finished competitions, create new competitions,
+            and remove test archived competitions.
           </p>
         </div>
 
@@ -310,7 +313,7 @@ export default async function CompetitionsAdminPage({
       </section>
 
       <section className="card">
-        <h2>Recently archived competitions</h2>
+        <h2>Archived competitions</h2>
 
         {!previousCompetitions ||
         previousCompetitions.length === 0 ? (
@@ -318,16 +321,54 @@ export default async function CompetitionsAdminPage({
         ) : (
           <div className="admin-links">
             {previousCompetitions.map((competition) => (
-              <Link
+              <div
                 className="admin-tool-link"
-                href={`/previous-competitions/${competition.id}`}
                 key={competition.id}
               >
-                {competition.name}
-              </Link>
+                <strong>{competition.name}</strong>
+
+                <p className="entry-meta">
+                  Closed:{" "}
+                  {competition.closing_date
+                    ? new Date(
+                        competition.closing_date
+                      ).toLocaleString("en-GB")
+                    : "Not recorded"}
+                </p>
+
+                <div className="form-actions">
+                  <Link
+                    className="button-link secondary"
+                    href={`/previous-competitions/${competition.id}`}
+                  >
+                    View public archive
+                  </Link>
+
+                  <form action={deleteArchivedCompetition}>
+                    <input
+                      type="hidden"
+                      name="competition_id"
+                      value={competition.id}
+                    />
+
+                    <button
+                      className="danger-button"
+                      type="submit"
+                    >
+                      Delete archived competition
+                    </button>
+                  </form>
+                </div>
+              </div>
             ))}
           </div>
         )}
+
+        <p className="input-help">
+          Deleting an archived competition also deletes its fixtures,
+          entries and predictions. The active competition cannot be
+          deleted from this section.
+        </p>
       </section>
     </main>
   );

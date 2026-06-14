@@ -192,3 +192,45 @@ export async function createCompetition(formData: FormData) {
     )}`
   );
 }
+
+export async function deleteArchivedCompetition(formData: FormData) {
+  const supabase = await requireAdmin();
+
+  const competitionId = Number(formData.get("competition_id"));
+
+  if (!Number.isFinite(competitionId)) {
+    redirect(
+      `/admin/competitions?error=${encodeURIComponent(
+        "Archived competition could not be deleted."
+      )}`
+    );
+  }
+
+  const { error } = await supabase.rpc(
+    "delete_archived_competition",
+    {
+      p_competition_id: competitionId,
+    }
+  );
+
+  if (error) {
+    console.error(
+      "Unable to delete archived competition:",
+      error.message
+    );
+
+    redirect(
+      `/admin/competitions?error=${encodeURIComponent(
+        error.message || "Archived competition could not be deleted."
+      )}`
+    );
+  }
+
+  revalidateCompetitionPages();
+
+  redirect(
+    `/admin/competitions?success=${encodeURIComponent(
+      "Archived competition deleted."
+    )}`
+  );
+}
