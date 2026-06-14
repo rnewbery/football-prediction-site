@@ -61,6 +61,21 @@ function paymentStatusLabel(status: string | null) {
   return "Pending payment";
 }
 
+function formatUkDateTime(value: string | null) {
+  if (!value) {
+    return "Not recorded";
+  }
+
+  return new Date(value).toLocaleString("en-GB", {
+    timeZone: "Europe/London",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export default async function EntriesPage({
   searchParams,
 }: EntriesPageProps) {
@@ -269,9 +284,7 @@ export default async function EntriesPage({
 
                         <p className="entry-meta">
                           Submitted:{" "}
-                          {new Date(
-                            entry.submitted_at
-                          ).toLocaleString("en-GB")}
+                          {formatUkDateTime(entry.submitted_at)}
                         </p>
 
                         <p className="entry-meta">
@@ -284,18 +297,14 @@ export default async function EntriesPage({
                         {entry.approved_at && (
                           <p className="entry-meta">
                             Approved:{" "}
-                            {new Date(
-                              entry.approved_at
-                            ).toLocaleString("en-GB")}
+                            {formatUkDateTime(entry.approved_at)}
                           </p>
                         )}
 
                         {entry.rejected_at && (
                           <p className="entry-meta">
                             Rejected:{" "}
-                            {new Date(
-                              entry.rejected_at
-                            ).toLocaleString("en-GB")}
+                            {formatUkDateTime(entry.rejected_at)}
                           </p>
                         )}
                       </div>
