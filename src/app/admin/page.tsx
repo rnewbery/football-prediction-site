@@ -3,6 +3,21 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import { logout } from "./actions";
 
+function formatUkDateTime(value: string | null) {
+  if (!value) {
+    return "To be confirmed";
+  }
+
+  return new Date(value).toLocaleString("en-GB", {
+    timeZone: "Europe/London",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export default async function AdminPage() {
   const supabase = await createSupabaseServerClient();
 
@@ -83,13 +98,11 @@ export default async function AdminPage() {
       <section className="admin-summary-grid">
         <article className="card admin-summary-card">
           <span>Signed in as</span>
-
           <strong>{user.email}</strong>
         </article>
 
         <article className="card admin-summary-card">
           <span>Current competition</span>
-
           <strong>
             {competition?.name ?? "No active competition"}
           </strong>
@@ -97,7 +110,6 @@ export default async function AdminPage() {
 
         <article className="card admin-summary-card">
           <span>Fixtures</span>
-
           <strong>{fixtureCount ?? 0}</strong>
         </article>
       </section>
@@ -121,11 +133,7 @@ export default async function AdminPage() {
               <span>Closing date</span>
 
               <strong>
-                {competition.closing_date
-                  ? new Date(
-                      competition.closing_date
-                    ).toLocaleString("en-GB")
-                  : "To be confirmed"}
+                {formatUkDateTime(competition.closing_date)}
               </strong>
             </div>
 
@@ -142,7 +150,7 @@ export default async function AdminPage() {
       </section>
 
       <section className="card">
-        <h2>Main admin tools</h2>
+        <h2>Main competition tools</h2>
 
         <p>
           Use these for the live competition: approving entries,
@@ -170,9 +178,24 @@ export default async function AdminPage() {
           <Link className="admin-tool-link" href="/admin/competitions">
             Create or archive competitions
           </Link>
+        </div>
+      </section>
 
+      <section className="card">
+        <h2>Print or download sheets</h2>
+
+        <p>
+          Use these tools to import fixtures in bulk or print blank
+          prediction sheets for people who want to fill them in by hand.
+        </p>
+
+        <div className="admin-links">
           <Link className="admin-tool-link" href="/admin/fixture-import">
-            Import fixtures from CSV
+            Import fixtures
+          </Link>
+
+          <Link className="admin-tool-link" href="/admin/print-sheets">
+            Print prediction sheets
           </Link>
         </div>
       </section>

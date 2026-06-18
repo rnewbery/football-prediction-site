@@ -2,6 +2,23 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import PredictionForm from "./PredictionForm";
 
+export const dynamic = "force-dynamic";
+
+function formatUkDateTime(value: Date | null) {
+  if (!value) {
+    return "Not recorded";
+  }
+
+  return value.toLocaleString("en-GB", {
+    timeZone: "Europe/London",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export default async function PredictPage() {
   const { data: competition, error: competitionError } =
     await supabase
@@ -87,11 +104,7 @@ export default async function PredictPage() {
 
             <div>
               <span>Closed at</span>
-              <strong>
-                {closingDate
-                  ? closingDate.toLocaleString("en-GB")
-                  : "Not recorded"}
-              </strong>
+              <strong>{formatUkDateTime(closingDate)}</strong>
             </div>
           </div>
 

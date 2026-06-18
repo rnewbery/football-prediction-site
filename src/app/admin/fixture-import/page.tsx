@@ -47,11 +47,11 @@ export default async function FixtureImportPage({
         <div>
           <p className="eyebrow">Administrator area</p>
 
-          <h1>Import fixtures</h1>
+          <h1>Paste fixtures from Excel</h1>
 
           <p className="intro">
-            Paste fixture rows from Excel or a CSV file into the
-            current active competition.
+            Add lots of fixtures at once by copying rows from Excel
+            and pasting them into the box below.
           </p>
         </div>
 
@@ -76,7 +76,7 @@ export default async function FixtureImportPage({
         <h2>Current competition</h2>
 
         <p>
-          Fixtures will be imported into:{" "}
+          Fixtures will be added to:{" "}
           <strong>
             {competition?.name ?? "No active competition"}
           </strong>
@@ -84,28 +84,36 @@ export default async function FixtureImportPage({
       </section>
 
       <section className="card">
-        <h2>Paste fixture CSV</h2>
+        <h2>Copy and paste fixture rows</h2>
 
-        <p>Use this exact header row:</p>
+        <p>
+          Use this if the fixtures are already in a spreadsheet.
+          Copy the columns from Excel and paste them below.
+        </p>
+
+        <p>
+          Use these column headings:
+        </p>
 
         <pre className="code-example">
-{`game_number,kickoff_at,home_team,away_team
-1,11 Jun 2026 20:00,Mexico,South Africa
-2,11 Jun 2026 23:00,South Korea,Czechia
-3,12 Jun 2026 20:00,Canada,Bosnia and Herzegovina`}
+{`Week,Date,Group,Home Team,Away Team
+1,11 Jun 2026 20:00,A,Mexico,South Africa
+1,11 Jun 2026 23:00,A,South Korea,Czechia
+1,12 Jun 2026 20:00,B,Canada,Bosnia and Herzegovina`}
         </pre>
 
         <form action={importFixtures}>
           <div>
-            <label htmlFor="fixture_csv">Fixture rows</label>
+            <label htmlFor="fixture_csv">Fixture list</label>
 
             <textarea
               id="fixture_csv"
               name="fixture_csv"
               rows={12}
-              placeholder={`game_number,kickoff_at,home_team,away_team
-1,11 Jun 2026 20:00,Mexico,South Africa
-2,11 Jun 2026 23:00,South Korea,Czechia`}
+              placeholder={`Week,Date,Group,Home Team,Away Team
+1,11 Jun 2026 20:00,A,Mexico,South Africa
+1,11 Jun 2026 23:00,A,South Korea,Czechia
+1,12 Jun 2026 20:00,B,Canada,Bosnia and Herzegovina`}
               required
             />
           </div>
@@ -123,9 +131,14 @@ export default async function FixtureImportPage({
         </form>
 
         <p className="input-help">
-          Kickoff date and time must use this format: 11 Jun 2026
-          20:00. Fixtures will be ordered from earliest to latest
-          on the prediction page.
+          The Date column should use this format: 11 Jun 2026 20:00.
+          The Group column can be left blank if it is not needed.
+        </p>
+
+        <p className="input-help">
+          This does not upload an Excel file. It copies the rows from
+          Excel into the website, which is simpler and less likely to
+          break.
         </p>
       </section>
     </main>

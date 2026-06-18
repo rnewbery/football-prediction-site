@@ -53,6 +53,23 @@ function parseCsvLine(line: string) {
   return values;
 }
 
+function normaliseHeader(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "_")
+    .replace(/[^a-z0-9_]/g, "");
+}
+
+function getHeaderIndex(
+  header: string[],
+  possibleNames: string[]
+) {
+  return possibleNames
+    .map((name) => header.indexOf(name))
+    .find((index) => index !== -1) ?? -1;
+}
+
 function parseKickoffDateTime(value: string) {
   const trimmedValue = value.trim();
 
@@ -93,7 +110,10 @@ function parseKickoffDateTime(value: string) {
   const minute = minuteText.padStart(2, "0");
 
   return {
-    displayValue: `${Number(dayText)} ${monthText.slice(0, 3)} ${yearText} ${hour}:${minute}`,
+    displayValue: `${Number(dayText)} ${monthText.slice(
+      0,
+      3
+    )} ${yearText} ${hour}:${minute}`,
     sortKey: `${yearText}-${monthNumber}-${day} ${hour}:${minute}`,
   };
 }
@@ -140,29 +160,54 @@ export async function importFixtures(formData: FormData) {
   if (lines.length < 2) {
     redirect(
       `/admin/fixture-import?error=${encodeURIComponent(
-        "Please include a header row and at least one fixture row."
+        "Please include a heading row and at least one fixture row."
       )}`
     );
   }
 
-  const header = parseCsvLine(lines[0]).map((value) =>
-    value.toLowerCase().replace(/\s+/g, "_")
-  );
+  const header = parseCsvLine(lines[0]).map(normaliseHeader);
 
-  const gameNumberIndex = header.indexOf("game_number");
-  const kickoffAtIndex = header.indexOf("kickoff_at");
-  const homeTeamIndex = header.indexOf("home_team");
-  const awayTeamIndex = header.indexOf("away_team");
+  const weekIndex = getHeaderIndex(header, [
+    "week",
+    "week_no",
+    "week_number",
+    "game_number",
+    "game_no",
+  ]);
+
+  const dateIndex = getHeaderIndex(header, [
+    "date",
+    "date_time",
+    "kickoff",
+    "kickoff_at",
+    "kickoff_time",
+  ]);
+
+  const groupIndex = getHeaderIndex(header, [
+    "group",
+    "grp",
+    "group_name",
+  ]);
+
+  const homeTeamIndex = getHeaderIndex(header, [
+    "home_team",
+    "home",
+  ]);
+
+  const awayTeamIndex = getHeaderIndex(header, [
+    "away_team",
+    "away",
+  ]);
 
   if (
-    gameNumberIndex === -1 ||
-    kickoffAtIndex === -1 ||
+    weekIndex === -1 ||
+    dateIndex === -1 ||
     homeTeamIndex === -1 ||
     awayTeamIndex === -1
   ) {
     redirect(
       `/admin/fixture-import?error=${encodeURIComponent(
-        "CSV must include these headers: game_number, kickoff_at, home_team, away_team."
+        "The fixture list must include these headings: Week, Date, Home Team, Away Team. Group is optional."
       )}`
     );
   }
@@ -170,13 +215,21 @@ export async function importFixtures(formData: FormData) {
   const fixtureRows = lines.slice(1).map((line) => {
     const values = parseCsvLine(line);
 
-    const kickoff = parseKickoffDateTime(
-      values[kickoffAtIndex] ?? ""
-    );
+    const kickoff = parseKickoffDateTime(values[dateIndex] ?? "");
+
+    const weekValue = values[weekIndex] ?? "";
+    const groupValue =
+      groupIndex === -1 ? "" : values[groupIndex] ?? "";
+
+    const combinedGroup = groupValue
+      ? groupValue
+      : weekValue
+        ? `Week ${weekValue}`
+        : "";
 
     return {
       competition_id: competition.id,
-      group_name: values[gameNumberIndex] ?? "",
+      group_name: combinedGroup,
       fixture_label: kickoff?.displayValue ?? "",
       kickoff_at: kickoff?.displayValue ?? "",
       kickoff_sort_key: kickoff?.sortKey ?? "",
@@ -192,7 +245,6 @@ export async function importFixtures(formData: FormData) {
 
   const invalidRow = fixtureRows.find(
     (row) =>
-      !row.group_name ||
       !row.kickoff_at ||
       !row.kickoff_sort_key ||
       !row.home_team ||
@@ -202,7 +254,7 @@ export async function importFixtures(formData: FormData) {
   if (invalidRow) {
     redirect(
       `/admin/fixture-import?error=${encodeURIComponent(
-        "One or more rows are missing data, or the kickoff date is not in this format: 11 Jun 2026 20:00."
+        "One or more rows are missing data, or the date is not in this format: 11 Jun 2026 20:00."
       )}`
     );
   }
@@ -223,6 +275,7 @@ export async function importFixtures(formData: FormData) {
 
   revalidatePath("/admin/fixtures");
   revalidatePath("/admin/fixture-import");
+  revalidatePath("/admin/print-sheets");
   revalidatePath("/predict");
 
   redirect(
