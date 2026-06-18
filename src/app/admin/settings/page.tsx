@@ -55,20 +55,19 @@ export default async function SettingsPage({
 
   const { data: competition } = await supabase
     .from("competitions")
-    .select(`
+    .select(
+      `
       id,
       name,
       entry_cost,
       closing_date,
-      exact_score_points,
-      correct_result_points,
-      incorrect_result_points,
       access_code,
       first_prize,
       second_prize,
       third_prize,
       prize_notes
-    `)
+    `
+    )
     .eq("is_active", true)
     .limit(1)
     .maybeSingle();
@@ -86,8 +85,7 @@ export default async function SettingsPage({
           <h1>Competition settings</h1>
 
           <p className="intro">
-            Edit the competition details, access code, prizes and
-            scoring rules.
+            Edit the competition details, entry code and prizes.
           </p>
         </div>
 
@@ -113,195 +111,191 @@ export default async function SettingsPage({
           <p>No active competition is available.</p>
         </section>
       ) : (
-        <section className="card">
-          <form action={updateCompetition}>
-            <input
-              type="hidden"
-              name="competition_id"
-              value={competition.id}
-            />
+        <>
+          <section className="card">
+            <form action={updateCompetition}>
+              <input
+                type="hidden"
+                name="competition_id"
+                value={competition.id}
+              />
 
-            <h2>Basic details</h2>
+              <h2>Basic details</h2>
 
-            <div className="settings-grid">
-              <div>
-                <label htmlFor="competition-name">
-                  Competition name
-                </label>
+              <div className="settings-grid">
+                <div>
+                  <label htmlFor="competition-name">
+                    Competition name
+                  </label>
 
-                <input
-                  id="competition-name"
-                  name="name"
-                  type="text"
-                  defaultValue={competition.name}
-                  required
-                />
+                  <input
+                    id="competition-name"
+                    name="name"
+                    type="text"
+                    defaultValue={competition.name}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="access-code">
+                    Competition access code
+                  </label>
+
+                  <input
+                    id="access-code"
+                    name="access_code"
+                    type="text"
+                    defaultValue={competition.access_code ?? ""}
+                    placeholder="Example: GARY2026"
+                    required
+                  />
+
+                  <p className="input-help">
+                    People need this code before they can submit an
+                    entry.
+                  </p>
+                </div>
+
+                <div>
+                  <label htmlFor="entry-cost">Entry cost</label>
+
+                  <input
+                    id="entry-cost"
+                    name="entry_cost"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    defaultValue={competition.entry_cost}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="closing-date">
+                    Closing date and time
+                  </label>
+
+                  <input
+                    id="closing-date"
+                    name="closing_date"
+                    type="datetime-local"
+                    defaultValue={closingDateValue}
+                  />
+                </div>
               </div>
 
-              <div>
-                <label htmlFor="access-code">
-                  Competition access code
-                </label>
+              <h2>Prizes</h2>
 
-                <input
-                  id="access-code"
-                  name="access_code"
-                  type="text"
-                  defaultValue={competition.access_code ?? ""}
-                  placeholder="Example: GARY2026"
-                  required
-                />
+              <div className="settings-grid">
+                <div>
+                  <label htmlFor="first-prize">
+                    First prize
+                  </label>
 
-                <p className="input-help">
-                  People need this code before they can submit an
-                  entry.
-                </p>
+                  <input
+                    id="first-prize"
+                    name="first_prize"
+                    type="text"
+                    defaultValue={competition.first_prize ?? ""}
+                    placeholder="Example: £100"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="second-prize">
+                    Second prize
+                  </label>
+
+                  <input
+                    id="second-prize"
+                    name="second_prize"
+                    type="text"
+                    defaultValue={competition.second_prize ?? ""}
+                    placeholder="Example: £50"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="third-prize">
+                    Third prize
+                  </label>
+
+                  <input
+                    id="third-prize"
+                    name="third_prize"
+                    type="text"
+                    defaultValue={competition.third_prize ?? ""}
+                    placeholder="Example: £25"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="prize-notes">
+                    Prize notes
+                  </label>
+
+                  <textarea
+                    id="prize-notes"
+                    name="prize_notes"
+                    defaultValue={competition.prize_notes ?? ""}
+                    placeholder="Example: Prizes depend on number of entries."
+                    rows={4}
+                  />
+                </div>
               </div>
 
-              <div>
-                <label htmlFor="entry-cost">Entry cost</label>
-
-                <input
-                  id="entry-cost"
-                  name="entry_cost"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  defaultValue={competition.entry_cost}
-                />
+              <div className="form-actions">
+                <button type="submit">Save settings</button>
               </div>
+            </form>
+          </section>
 
-              <div>
-                <label htmlFor="closing-date">
-                  Closing date and time
-                </label>
-
-                <input
-                  id="closing-date"
-                  name="closing_date"
-                  type="datetime-local"
-                  defaultValue={closingDateValue}
-                />
-              </div>
-            </div>
-
-            <h2>Prizes</h2>
-
-            <div className="settings-grid">
-              <div>
-                <label htmlFor="first-prize">
-                  First prize
-                </label>
-
-                <input
-                  id="first-prize"
-                  name="first_prize"
-                  type="text"
-                  defaultValue={competition.first_prize ?? ""}
-                  placeholder="Example: £100"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="second-prize">
-                  Second prize
-                </label>
-
-                <input
-                  id="second-prize"
-                  name="second_prize"
-                  type="text"
-                  defaultValue={competition.second_prize ?? ""}
-                  placeholder="Example: £50"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="third-prize">
-                  Third prize
-                </label>
-
-                <input
-                  id="third-prize"
-                  name="third_prize"
-                  type="text"
-                  defaultValue={competition.third_prize ?? ""}
-                  placeholder="Example: £25"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="prize-notes">
-                  Prize notes
-                </label>
-
-                <textarea
-                  id="prize-notes"
-                  name="prize_notes"
-                  defaultValue={competition.prize_notes ?? ""}
-                  placeholder="Example: Prizes depend on number of paid entries."
-                  rows={4}
-                />
-              </div>
-            </div>
-
+          <section className="card">
             <h2>Scoring rules</h2>
 
-            <div className="settings-grid">
-              <div>
-                <label htmlFor="exact-points">
-                  Exact-score points
-                </label>
+            <p>
+              These are currently fixed for the standard football
+              competition.
+            </p>
 
-                <input
-                  id="exact-points"
-                  name="exact_score_points"
-                  type="number"
-                  min="0"
-                  defaultValue={
-                    competition.exact_score_points
-                  }
-                />
+            <div className="competition-details">
+              <div>
+                <span>Exact score</span>
+                <strong>5 points</strong>
               </div>
 
               <div>
-                <label htmlFor="result-points">
-                  Correct-result points
-                </label>
-
-                <input
-                  id="result-points"
-                  name="correct_result_points"
-                  type="number"
-                  min="0"
-                  defaultValue={
-                    competition.correct_result_points
-                  }
-                />
+                <span>Result + 1 score</span>
+                <strong>3 points</strong>
               </div>
 
               <div>
-                <label htmlFor="incorrect-points">
-                  Incorrect-result points
-                </label>
+                <span>Result only</span>
+                <strong>2 points</strong>
+              </div>
 
-                <input
-                  id="incorrect-points"
-                  name="incorrect_result_points"
-                  type="number"
-                  min="0"
-                  defaultValue={
-                    competition.incorrect_result_points
-                  }
-                />
+              <div>
+                <span>Wrong result + 1 score</span>
+                <strong>1 point</strong>
+              </div>
+
+              <div>
+                <span>Wrong result</span>
+                <strong>0 points</strong>
+              </div>
+
+              <div>
+                <span>Correct draw</span>
+                <strong>3 points</strong>
               </div>
             </div>
 
-            <div className="form-actions">
-              <button type="submit">Save settings</button>
-            </div>
-          </form>
-        </section>
+            <p className="input-help">
+              Different competition types can be added later as scoring
+              templates.
+            </p>
+          </section>
+        </>
       )}
     </main>
   );

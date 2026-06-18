@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 type Fixture = {
@@ -23,10 +23,19 @@ type PredictionScores = {
   away: string;
 };
 
+type SavedPredictionDraft = {
+  name: string;
+  email: string;
+  accessCode: string;
+  scores: Record<number, PredictionScores>;
+};
+
 export default function PredictionForm({
   competitionId,
   fixtures,
 }: PredictionFormProps) {
+  const storageKey = `prediction-draft-${competitionId}`;
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [accessCode, setAccessCode] = useState("");
@@ -36,7 +45,71 @@ export default function PredictionForm({
   >({});
 
   const [message, setMessage] = useState("");
+  const [draftMessage, setDraftMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasLoadedDraft, setHasLoadedDraft] = useState(false);
+
+  useEffect(() => {
+    const savedDraft = window.localStorage.getItem(storageKey);
+
+    if (savedDraft) {
+      try {
+        const parsedDraft = JSON.parse(
+          savedDraft
+        ) as SavedPredictionDraft;
+
+        setName(parsedDraft.name ?? "");
+        setEmail(parsedDraft.email ?? "");
+        setAccessCode(parsedDraft.accessCode ?? "");
+        setScores(parsedDraft.scores ?? {});
+        setDraftMessage(
+          "Saved progress restored from this device."
+        );
+      } catch {
+        window.localStorage.removeItem(storageKey);
+      }
+    }
+
+    setHasLoadedDraft(true);
+  }, [storageKey]);
+
+  useEffect(() => {
+    if (!hasLoadedDraft) {
+      return;
+    }
+
+    const hasAnyDraftContent =
+      name.trim() ||
+      email.trim() ||
+      accessCode.trim() ||
+      Object.values(scores).some(
+        (fixtureScores) =>
+          fixtureScores.home !== "" || fixtureScores.away !== ""
+      );
+
+    if (!hasAnyDraftContent) {
+      window.localStorage.removeItem(storageKey);
+      setDraftMessage("");
+      return;
+    }
+
+    const draft: SavedPredictionDraft = {
+      name,
+      email,
+      accessCode,
+      scores,
+    };
+
+    window.localStorage.setItem(storageKey, JSON.stringify(draft));
+    setDraftMessage("Progress saved on this device.");
+  }, [
+    name,
+    email,
+    accessCode,
+    scores,
+    hasLoadedDraft,
+    storageKey,
+  ]);
 
   function updateScore(
     fixtureId: number,
@@ -51,6 +124,16 @@ export default function PredictionForm({
         [side]: value,
       },
     }));
+  }
+
+  function clearDraft() {
+    window.localStorage.removeItem(storageKey);
+    setName("");
+    setEmail("");
+    setAccessCode("");
+    setScores({});
+    setMessage("");
+    setDraftMessage("");
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -127,14 +210,17 @@ export default function PredictionForm({
       return;
     }
 
+    window.localStorage.removeItem(storageKey);
+
     setMessage(
-      `Your predictions have been submitted. Entry reference: ${entryId}. Your entry is pending until payment has been confirmed by the organiser.`
+      `Your predictions have been submitted. Entry reference: ${entryId}.`
     );
 
     setName("");
     setEmail("");
     setAccessCode("");
     setScores({});
+    setDraftMessage("");
     setIsSubmitting(false);
   }
 
@@ -189,9 +275,13 @@ export default function PredictionForm({
         </div>
 
         <p className="form-message">
-          Entries will only appear on the leaderboard once payment
-          has been confirmed.
+          Your progress will save automatically on this device until
+          you submit your entry.
         </p>
+
+        {draftMessage && (
+          <p className="input-help">{draftMessage}</p>
+        )}
       </section>
 
       <section className="card">
@@ -202,7 +292,7 @@ export default function PredictionForm({
             <thead>
               <tr>
                 <th>Date / time</th>
-                <th>Week No.</th>
+                <th>Week / group</th>
                 <th>Home Team</th>
                 <th>Home Score</th>
                 <th>Away Score</th>
@@ -213,8 +303,12 @@ export default function PredictionForm({
             <tbody>
               {fixtures.map((fixture) => (
                 <tr key={fixture.id}>
-                  <td>{fixture.kickoff_at ?? fixture.fixture_label}</td>
-                  <td>{fixture.group_name}</td>
+                  <td>
+                    {fixture.kickoff_at ?? fixture.fixture_label}
+                  </td>
+
+                  <td>{fixture.group_name ?? ""}</td>
+
                   <td>{fixture.home_team}</td>
 
                   <td>
@@ -277,6 +371,14 @@ export default function PredictionForm({
             onClick={() => window.print()}
           >
             Print this sheet
+          </button>
+
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={clearDraft}
+          >
+            Clear saved draft
           </button>
         </div>
       </section>

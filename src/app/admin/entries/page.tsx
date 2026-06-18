@@ -2,12 +2,7 @@ import ExportEntriesButton from "./ExportEntriesButton";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
-import {
-  approveEntry,
-  deleteEntry,
-  markEntryPending,
-  rejectEntry,
-} from "./actions";
+import { deleteEntry } from "./actions";
 
 type EntriesPageProps = {
   searchParams?: Promise<{
@@ -48,18 +43,6 @@ type Entry = {
   participant: ParticipantRelationship | null;
   predictions: Prediction[];
 };
-
-function paymentStatusLabel(status: string | null) {
-  if (status === "approved") {
-    return "Approved / paid";
-  }
-
-  if (status === "rejected") {
-    return "Rejected / not counted";
-  }
-
-  return "Pending payment";
-}
 
 function formatUkDateTime(value: string | null) {
   if (!value) {
@@ -151,20 +134,6 @@ export default async function EntriesPage({
 
   const entries = (data ?? []) as unknown as Entry[];
 
-  const pendingEntries = entries.filter(
-    (entry) =>
-      !entry.payment_status ||
-      entry.payment_status === "pending"
-  ).length;
-
-  const approvedEntries = entries.filter(
-    (entry) => entry.payment_status === "approved"
-  ).length;
-
-  const rejectedEntries = entries.filter(
-    (entry) => entry.payment_status === "rejected"
-  ).length;
-
   return (
     <main>
       <div className="page-header">
@@ -174,8 +143,8 @@ export default async function EntriesPage({
           <h1>Participant entries</h1>
 
           <p className="intro">
-            Review submitted predictions, confirm payment and
-            control which entries appear on the leaderboard.
+            View submitted predictions, edit entries if someone made
+            a mistake, or delete entries if needed.
           </p>
         </div>
 
@@ -217,18 +186,18 @@ export default async function EntriesPage({
 
           <section className="admin-summary-grid">
             <article className="card admin-summary-card">
-              <span>Pending payment</span>
-              <strong>{pendingEntries}</strong>
+              <span>Total entries</span>
+              <strong>{entries.length}</strong>
             </article>
 
             <article className="card admin-summary-card">
-              <span>Approved / paid</span>
-              <strong>{approvedEntries}</strong>
+              <span>Competition</span>
+              <strong>{competition.name}</strong>
             </article>
 
             <article className="card admin-summary-card">
-              <span>Rejected</span>
-              <strong>{rejectedEntries}</strong>
+              <span>Admin actions</span>
+              <strong>Edit or delete</strong>
             </article>
           </section>
 
@@ -250,9 +219,6 @@ export default async function EntriesPage({
                   (prediction) => prediction.is_exact_score
                 ).length;
 
-                const paymentStatus =
-                  entry.payment_status ?? "pending";
-
                 return (
                   <article
                     className="card entry-card"
@@ -260,14 +226,7 @@ export default async function EntriesPage({
                   >
                     <div className="entry-header">
                       <div>
-                        <h2 className="entry-name-with-status">
-                          <span
-                            className={`payment-status-dot payment-status-${paymentStatus}`}
-                            title={paymentStatusLabel(
-                              paymentStatus
-                            )}
-                          />
-
+                        <h2>
                           {entry.participant?.name ??
                             "Unnamed participant"}
                         </h2>
@@ -286,27 +245,6 @@ export default async function EntriesPage({
                           Submitted:{" "}
                           {formatUkDateTime(entry.submitted_at)}
                         </p>
-
-                        <p className="entry-meta">
-                          Payment status:{" "}
-                          <strong>
-                            {paymentStatusLabel(paymentStatus)}
-                          </strong>
-                        </p>
-
-                        {entry.approved_at && (
-                          <p className="entry-meta">
-                            Approved:{" "}
-                            {formatUkDateTime(entry.approved_at)}
-                          </p>
-                        )}
-
-                        {entry.rejected_at && (
-                          <p className="entry-meta">
-                            Rejected:{" "}
-                            {formatUkDateTime(entry.rejected_at)}
-                          </p>
-                        )}
                       </div>
 
                       <div className="entry-score-summary">
@@ -322,79 +260,40 @@ export default async function EntriesPage({
                       </div>
                     </div>
 
-                    <div className="payment-actions">
-                      {paymentStatus !== "approved" && (
-                        <form action={approveEntry}>
-                          <input
-                            type="hidden"
-                            name="entry_id"
-                            value={entry.id}
-                          />
+                    <div className="entry-action-row">
+                      <Link
+                        className="button-link secondary"
+                        href={`/admin/entries/${entry.id}/edit`}
+                      >
+                        Edit entry
+                      </Link>
 
-                          <input
-                            type="hidden"
-                            name="competition_id"
-                            value={competition.id}
-                          />
+                      <form action={deleteEntry}>
+                        <input
+                          type="hidden"
+                          name="entry_id"
+                          value={entry.id}
+                        />
 
-                          <button type="submit">
-                            Approve paid entry
-                          </button>
-                        </form>
-                      )}
+                        <input
+                          type="hidden"
+                          name="competition_id"
+                          value={competition.id}
+                        />
 
-                      {paymentStatus !== "pending" && (
-                        <form action={markEntryPending}>
-                          <input
-                            type="hidden"
-                            name="entry_id"
-                            value={entry.id}
-                          />
-
-                          <input
-                            type="hidden"
-                            name="competition_id"
-                            value={competition.id}
-                          />
-
-                          <button
-                            className="secondary-button"
-                            type="submit"
-                          >
-                            Mark as pending
-                          </button>
-                        </form>
-                      )}
-
-                      {paymentStatus !== "rejected" && (
-                        <form action={rejectEntry}>
-                          <input
-                            type="hidden"
-                            name="entry_id"
-                            value={entry.id}
-                          />
-
-                          <input
-                            type="hidden"
-                            name="competition_id"
-                            value={competition.id}
-                          />
-
-                          <button
-                            className="danger-button"
-                            type="submit"
-                          >
-                            Reject entry
-                          </button>
-                        </form>
-                      )}
+                        <button
+                          className="danger-button"
+                          type="submit"
+                        >
+                          Delete entry
+                        </button>
+                      </form>
                     </div>
 
                     <div className="table-wrapper">
                       <table className="entries-table">
                         <thead>
                           <tr>
-                            <th>Week No.</th>
                             <th>Fixture</th>
                             <th>Prediction</th>
                             <th>Result</th>
@@ -424,10 +323,6 @@ export default async function EntriesPage({
 
                               return (
                                 <tr key={prediction.id}>
-                                  <td>
-                                    {fixture?.group_name ?? ""}
-                                  </td>
-
                                   <td>
                                     {fixture
                                       ? `${fixture.home_team} v ${fixture.away_team}`
@@ -464,27 +359,6 @@ export default async function EntriesPage({
                         </tbody>
                       </table>
                     </div>
-
-                    <form action={deleteEntry}>
-                      <input
-                        type="hidden"
-                        name="entry_id"
-                        value={entry.id}
-                      />
-
-                      <input
-                        type="hidden"
-                        name="competition_id"
-                        value={competition.id}
-                      />
-
-                      <button
-                        className="danger-button"
-                        type="submit"
-                      >
-                        Delete entry
-                      </button>
-                    </form>
                   </article>
                 );
               })}

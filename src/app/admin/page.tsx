@@ -38,10 +38,7 @@ export default async function AdminPage() {
           id,
           name,
           entry_cost,
-          closing_date,
-          exact_score_points,
-          correct_result_points,
-          incorrect_result_points
+          closing_date
         `
       )
       .eq("is_active", true)
@@ -74,8 +71,8 @@ export default async function AdminPage() {
           <h1>Competition dashboard</h1>
 
           <p className="intro">
-            Manage the current competition, fixtures, results,
-            participant entries and approvals.
+            Manage the current competition, fixtures, results and
+            participant entries.
           </p>
         </div>
 
@@ -138,12 +135,9 @@ export default async function AdminPage() {
             </div>
 
             <div>
-              <span>Scoring</span>
+              <span>Scoring rules</span>
 
-              <strong>
-                Exact {competition.exact_score_points} / Result{" "}
-                {competition.correct_result_points}
-              </strong>
+              <strong>Standard football scoring</strong>
             </div>
           </div>
         )}
@@ -153,14 +147,13 @@ export default async function AdminPage() {
         <h2>Main competition tools</h2>
 
         <p>
-          Use these for the live competition: approving entries,
-          checking the leaderboard, managing fixtures and entering
-          results.
+          View entries, check the leaderboard, manage fixtures and
+          enter results.
         </p>
 
         <div className="admin-links">
           <Link className="admin-tool-link" href="/admin/entries">
-            View and approve participant entries
+            View participant entries
           </Link>
 
           <Link className="admin-tool-link" href="/admin/leaderboard">
@@ -185,17 +178,17 @@ export default async function AdminPage() {
         <h2>Print or download sheets</h2>
 
         <p>
-          Use these tools to import fixtures in bulk or print blank
-          prediction sheets for people who want to fill them in by hand.
+          Print prediction sheets for manual entries. Import fixtures
+          is used for bulk fixture imports only.
         </p>
 
         <div className="admin-links">
-          <Link className="admin-tool-link" href="/admin/fixture-import">
-            Import fixtures
-          </Link>
-
           <Link className="admin-tool-link" href="/admin/print-sheets">
             Print prediction sheets
+          </Link>
+
+          <Link className="admin-tool-link" href="/admin/fixture-import">
+            Import fixtures
           </Link>
         </div>
       </section>
@@ -203,10 +196,7 @@ export default async function AdminPage() {
       <section className="card admin-summary-card">
         <h2>API automation tools</h2>
 
-        <p>
-          These are kept for future automated score updates to be used if
-          the API is upgraded or another provider is added.
-        </p>
+        <p>Ignore — for future automation purposes only.</p>
 
         <div className="admin-links">
           <Link className="admin-tool-link" href="/admin/fixture-search">

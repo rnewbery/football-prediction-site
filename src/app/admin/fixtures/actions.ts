@@ -127,13 +127,12 @@ export async function addFixture(formData: FormData) {
   if (
     !Number.isFinite(competitionId) ||
     !kickoff ||
-    !gameNumber ||
     !homeTeam ||
     !awayTeam
   ) {
     redirect(
       `/admin/fixtures?error=${encodeURIComponent(
-        "Please enter a valid kickoff date/time, game number, home team and away team."
+        "Please enter a valid kickoff date/time, home team and away team."
       )}`
     );
   }
@@ -143,7 +142,7 @@ export async function addFixture(formData: FormData) {
     fixture_label: kickoff.displayValue,
     kickoff_at: kickoff.displayValue,
     kickoff_sort_key: kickoff.sortKey,
-    group_name: gameNumber,
+    group_name: gameNumber || null,
     home_team: homeTeam,
     away_team: awayTeam,
     home_score: null,
@@ -198,7 +197,6 @@ export async function updateFixture(formData: FormData) {
     !Number.isFinite(fixtureId) ||
     !Number.isFinite(competitionId) ||
     !kickoff ||
-    !gameNumber ||
     !homeTeam ||
     !awayTeam
   ) {
@@ -215,7 +213,7 @@ export async function updateFixture(formData: FormData) {
       fixture_label: kickoff.displayValue,
       kickoff_at: kickoff.displayValue,
       kickoff_sort_key: kickoff.sortKey,
-      group_name: gameNumber,
+      group_name: gameNumber || null,
       home_team: homeTeam,
       away_team: awayTeam,
       home_score: homeScore,

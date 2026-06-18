@@ -172,7 +172,7 @@ export default async function CompetitionsAdminPage({
                 id="name"
                 name="name"
                 type="text"
-                placeholder="World Cup 2026"
+                placeholder="e.g. Prem League 2026"
                 required
               />
             </div>
@@ -184,7 +184,7 @@ export default async function CompetitionsAdminPage({
                 id="access_code"
                 name="access_code"
                 type="text"
-                placeholder="GARY2026"
+                placeholder="e.g. GARY2026"
                 required
               />
             </div>

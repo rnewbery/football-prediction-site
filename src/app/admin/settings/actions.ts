@@ -28,18 +28,6 @@ export async function updateCompetition(formData: FormData) {
     formData.get("closing_date") ?? ""
   ).trim();
 
-  const exactScorePoints = Number(
-    formData.get("exact_score_points") ?? 0
-  );
-
-  const correctResultPoints = Number(
-    formData.get("correct_result_points") ?? 0
-  );
-
-  const incorrectResultPoints = Number(
-    formData.get("incorrect_result_points") ?? 0
-  );
-
   const firstPrize = String(
     formData.get("first_prize") ?? ""
   ).trim();
@@ -79,9 +67,6 @@ export async function updateCompetition(formData: FormData) {
       access_code: accessCode,
       entry_cost: entryCost,
       closing_date: closingDate,
-      exact_score_points: exactScorePoints,
-      correct_result_points: correctResultPoints,
-      incorrect_result_points: incorrectResultPoints,
       first_prize: firstPrize || null,
       second_prize: secondPrize || null,
       third_prize: thirdPrize || null,
@@ -97,15 +82,12 @@ export async function updateCompetition(formData: FormData) {
     );
   }
 
-  await supabase.rpc("recalculate_competition_scores", {
-    p_competition_id: competitionId,
-  });
-
   revalidatePath("/");
   revalidatePath("/predict");
   revalidatePath("/leaderboard");
   revalidatePath("/admin");
   revalidatePath("/admin/settings");
+  revalidatePath("/admin/leaderboard");
 
   redirect(
     "/admin/settings?success=Competition settings updated."

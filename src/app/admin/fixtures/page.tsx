@@ -83,8 +83,8 @@ export default async function FixturesPage({
           <h1>Manage fixtures and results</h1>
 
           <p className="intro">
-            Add fixtures, assign each game to a week, enter match
-            results and manage API-Football fixture links.
+            Add fixtures, enter match results and manage fixture
+            details.
           </p>
         </div>
 
@@ -141,24 +141,6 @@ export default async function FixturesPage({
                 </div>
 
                 <div>
-                  <label htmlFor="new-game-number">
-                    Week / group
-                  </label>
-
-                  <input
-                    id="new-game-number"
-                    name="game_number"
-                    type="text"
-                    placeholder="Week 1"
-                    required
-                  />
-
-                  <p className="input-help">
-                    Use Week 1, Week 2, Week 3 or Week 4.
-                  </p>
-                </div>
-
-                <div>
                   <label htmlFor="new-home-team">
                     Home team
                   </label>
@@ -185,8 +167,25 @@ export default async function FixturesPage({
                 </div>
 
                 <div>
+                  <label htmlFor="new-game-number">
+                    Week / group
+                  </label>
+
+                  <input
+                    id="new-game-number"
+                    name="game_number"
+                    type="text"
+                    placeholder="e.g. Week 1 or A"
+                  />
+
+                  <p className="input-help">
+                    Optional. Use this for the week or group.
+                  </p>
+                </div>
+
+                <div>
                   <label htmlFor="new-external-fixture-id">
-                    API fixture ID optional
+                    API fixture
                   </label>
 
                   <input
@@ -199,8 +198,7 @@ export default async function FixturesPage({
                   />
 
                   <p className="input-help">
-                    Leave blank if this fixture is not linked to
-                    API-Football.
+                    Optional. Leave blank if not linked.
                   </p>
                 </div>
               </div>
@@ -229,31 +227,6 @@ export default async function FixturesPage({
                       className="admin-fixture-card"
                       key={fixture.id}
                     >
-                      <div className="form-message">
-                        API fixture ID:{" "}
-                        <strong>
-                          {fixture.external_fixture_id ??
-                            "Not linked"}
-                        </strong>
-
-                        {fixture.external_fixture_id && (
-                          <form action={unlinkApiFixture}>
-                            <input
-                              type="hidden"
-                              name="fixture_id"
-                              value={fixture.id}
-                            />
-
-                            <button
-                              className="secondary-button"
-                              type="submit"
-                            >
-                              Unlink API fixture
-                            </button>
-                          </form>
-                        )}
-                      </div>
-
                       <form action={updateFixture}>
                         <input
                           type="hidden"
@@ -295,29 +268,6 @@ export default async function FixturesPage({
 
                           <div>
                             <label
-                              htmlFor={`game-number-${fixture.id}`}
-                            >
-                              Week / group
-                            </label>
-
-                            <input
-                              id={`game-number-${fixture.id}`}
-                              name="game_number"
-                              type="text"
-                              defaultValue={
-                                fixture.group_name ?? ""
-                              }
-                              placeholder="Week 1"
-                              required
-                            />
-
-                            <p className="input-help">
-                              Use Week 1, Week 2, Week 3 or Week 4.
-                            </p>
-                          </div>
-
-                          <div>
-                            <label
                               htmlFor={`home-team-${fixture.id}`}
                             >
                               Home team
@@ -350,34 +300,9 @@ export default async function FixturesPage({
 
                           <div>
                             <label
-                              htmlFor={`external-fixture-id-${fixture.id}`}
-                            >
-                              API fixture ID optional
-                            </label>
-
-                            <input
-                              id={`external-fixture-id-${fixture.id}`}
-                              name="external_fixture_id"
-                              type="number"
-                              min="1"
-                              step="1"
-                              defaultValue={
-                                fixture.external_fixture_id ?? ""
-                              }
-                              placeholder="e.g. 66456904"
-                            />
-
-                            <p className="input-help">
-                              Paste the API-Football fixture ID
-                              here, or leave blank if unlinked.
-                            </p>
-                          </div>
-
-                          <div>
-                            <label
                               htmlFor={`home-score-${fixture.id}`}
                             >
-                              Home result
+                              Home score
                             </label>
 
                             <input
@@ -396,7 +321,7 @@ export default async function FixturesPage({
                             <label
                               htmlFor={`away-score-${fixture.id}`}
                             >
-                              Away result
+                              Away score
                             </label>
 
                             <input
@@ -427,10 +352,6 @@ export default async function FixturesPage({
                                 Scheduled
                               </option>
 
-                              <option value="live">
-                                Live
-                              </option>
-
                               <option value="finished">
                                 Finished
                               </option>
@@ -439,6 +360,54 @@ export default async function FixturesPage({
                                 Postponed
                               </option>
                             </select>
+                          </div>
+
+                          <div>
+                            <label
+                              htmlFor={`game-number-${fixture.id}`}
+                            >
+                              Week / group
+                            </label>
+
+                            <input
+                              id={`game-number-${fixture.id}`}
+                              name="game_number"
+                              type="text"
+                              defaultValue={
+                                fixture.group_name ?? ""
+                              }
+                              placeholder="e.g. Week 1 or A"
+                            />
+
+                            <p className="input-help">
+                              Optional. Use this for the week or group.
+                            </p>
+                          </div>
+
+                          <div>
+                            <label
+                              htmlFor={`external-fixture-id-${fixture.id}`}
+                            >
+                              API fixture
+                            </label>
+
+                            <input
+                              id={`external-fixture-id-${fixture.id}`}
+                              name="external_fixture_id"
+                              type="number"
+                              min="1"
+                              step="1"
+                              defaultValue={
+                                fixture.external_fixture_id ?? ""
+                              }
+                              placeholder="e.g. 66456904"
+                            />
+
+                            <p className="input-help">
+                              {fixture.external_fixture_id
+                                ? `Linked: ${fixture.external_fixture_id}`
+                                : "Not linked"}
+                            </p>
                           </div>
                         </div>
 
@@ -449,26 +418,45 @@ export default async function FixturesPage({
                         </div>
                       </form>
 
-                      <form action={deleteFixture}>
-                        <input
-                          type="hidden"
-                          name="fixture_id"
-                          value={fixture.id}
-                        />
+                      <div className="form-actions">
+                        {fixture.external_fixture_id && (
+                          <form action={unlinkApiFixture}>
+                            <input
+                              type="hidden"
+                              name="fixture_id"
+                              value={fixture.id}
+                            />
 
-                        <input
-                          type="hidden"
-                          name="competition_id"
-                          value={competition.id}
-                        />
+                            <button
+                              className="secondary-button"
+                              type="submit"
+                            >
+                              Unlink API fixture
+                            </button>
+                          </form>
+                        )}
 
-                        <button
-                          className="danger-button"
-                          type="submit"
-                        >
-                          Delete fixture
-                        </button>
-                      </form>
+                        <form action={deleteFixture}>
+                          <input
+                            type="hidden"
+                            name="fixture_id"
+                            value={fixture.id}
+                          />
+
+                          <input
+                            type="hidden"
+                            name="competition_id"
+                            value={competition.id}
+                          />
+
+                          <button
+                            className="danger-button"
+                            type="submit"
+                          >
+                            Delete fixture
+                          </button>
+                        </form>
+                      </div>
                     </article>
                   );
                 })}
