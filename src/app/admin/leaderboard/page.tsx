@@ -74,14 +74,18 @@ function getPointsCellClass(points: number | undefined) {
   }
 
   if (points >= 5) {
-    return "breakdown-points-high";
+    return "breakdown-points-exact";
   }
 
-  if (points >= 3) {
-    return "breakdown-points-medium";
+  if (points === 3) {
+    return "breakdown-points-strong";
   }
 
-  if (points > 0) {
+  if (points === 2) {
+    return "breakdown-points-standard";
+  }
+
+  if (points === 1) {
     return "breakdown-points-low";
   }
 

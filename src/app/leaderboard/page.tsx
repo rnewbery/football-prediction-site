@@ -55,9 +55,11 @@ function getPositionClass(index: number) {
 
 function getPointsCellClass(points: number | undefined) {
   if (points === undefined) return "";
-  if (points >= 5) return "breakdown-points-high";
-  if (points >= 3) return "breakdown-points-medium";
-  if (points > 0) return "breakdown-points-low";
+  if (points >= 5) return "breakdown-points-exact";
+  if (points >= 3) return "breakdown-points-strong";
+  if (points >= 2) return "breakdown-points-standard";
+  if (points >= 1) return "breakdown-points-low";
+  if (points > 0) return "breakdown-points-zero";
 
   return "breakdown-points-zero";
 }
