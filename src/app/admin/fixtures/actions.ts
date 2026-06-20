@@ -23,47 +23,40 @@ function parseKickoffDateTime(value: string) {
   const trimmedValue = value.trim();
 
   const match = trimmedValue.match(
-    /^(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})\s+(\d{1,2}):(\d{2})$/
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/
   );
 
   if (!match) {
     return null;
   }
 
-  const [, dayText, monthText, yearText, hourText, minuteText] =
+  const [, yearText, monthText, dayText, hourText, minuteText] =
     match;
 
-  const monthMap: Record<string, string> = {
-    jan: "01",
-    feb: "02",
-    mar: "03",
-    apr: "04",
-    may: "05",
-    jun: "06",
-    jul: "07",
-    aug: "08",
-    sep: "09",
-    oct: "10",
-    nov: "11",
-    dec: "12",
+  const monthNames: Record<string, string> = {
+    "01": "Jan",
+    "02": "Feb",
+    "03": "Mar",
+    "04": "Apr",
+    "05": "May",
+    "06": "Jun",
+    "07": "Jul",
+    "08": "Aug",
+    "09": "Sep",
+    "10": "Oct",
+    "11": "Nov",
+    "12": "Dec",
   };
 
-  const monthNumber = monthMap[monthText.toLowerCase()];
+  const monthDisplay = monthNames[monthText];
 
-  if (!monthNumber) {
+  if (!monthDisplay) {
     return null;
   }
 
-  const day = dayText.padStart(2, "0");
-  const hour = hourText.padStart(2, "0");
-  const minute = minuteText.padStart(2, "0");
-  const monthDisplay =
-    monthText.slice(0, 1).toUpperCase() +
-    monthText.slice(1, 3).toLowerCase();
-
   return {
-    displayValue: `${Number(dayText)} ${monthDisplay} ${yearText} ${hour}:${minute}`,
-    sortKey: `${yearText}-${monthNumber}-${day} ${hour}:${minute}`,
+    displayValue: `${Number(dayText)} ${monthDisplay} ${yearText} ${hourText}:${minuteText}`,
+    sortKey: `${yearText}-${monthText}-${dayText} ${hourText}:${minuteText}`,
   };
 }
 
@@ -132,7 +125,7 @@ export async function addFixture(formData: FormData) {
   ) {
     redirect(
       `/admin/fixtures?error=${encodeURIComponent(
-        "Please enter a valid kickoff date/time, home team and away team."
+        "Please choose a kickoff date/time, home team and away team."
       )}`
     );
   }
@@ -202,7 +195,7 @@ export async function updateFixture(formData: FormData) {
   ) {
     redirect(
       `/admin/fixtures?error=${encodeURIComponent(
-        "Fixture could not be updated. Check the kickoff format: 11 Jun 2026 20:00."
+        "Fixture could not be updated. Check the kickoff date/time, home team and away team."
       )}`
     );
   }

@@ -15,6 +15,29 @@ type FixturesPageProps = {
   }>;
 };
 
+type Fixture = {
+  id: number;
+  fixture_label: string | null;
+  kickoff_at: string | null;
+  kickoff_sort_key: string | null;
+  group_name: string | null;
+  home_team: string;
+  away_team: string;
+  home_score: number | null;
+  away_score: number | null;
+  match_status: string | null;
+  status: string | null;
+  external_fixture_id: number | null;
+};
+
+function formatKickoffForInput(fixture: Fixture) {
+  if (fixture.kickoff_sort_key) {
+    return fixture.kickoff_sort_key.replace(" ", "T").slice(0, 16);
+  }
+
+  return "";
+}
+
 export default async function FixturesPage({
   searchParams,
 }: FixturesPageProps) {
@@ -130,13 +153,12 @@ export default async function FixturesPage({
                   <input
                     id="new-kickoff-at"
                     name="kickoff_at"
-                    type="text"
-                    placeholder="11 Jun 2026 20:00"
+                    type="datetime-local"
                     required
                   />
 
                   <p className="input-help">
-                    Use this format: 11 Jun 2026 20:00
+                    Choose the fixture date and kickoff time.
                   </p>
                 </div>
 
@@ -216,7 +238,7 @@ export default async function FixturesPage({
               <p>No fixtures have been added yet.</p>
             ) : (
               <div className="admin-fixture-list">
-                {fixtures.map((fixture) => {
+                {(fixtures as Fixture[]).map((fixture) => {
                   const displayStatus =
                     fixture.status ??
                     fixture.match_status ??
@@ -251,18 +273,15 @@ export default async function FixturesPage({
                             <input
                               id={`kickoff-at-${fixture.id}`}
                               name="kickoff_at"
-                              type="text"
-                              defaultValue={
-                                fixture.kickoff_at ??
-                                fixture.fixture_label ??
-                                ""
-                              }
-                              placeholder="11 Jun 2026 20:00"
+                              type="datetime-local"
+                              defaultValue={formatKickoffForInput(
+                                fixture
+                              )}
                               required
                             />
 
                             <p className="input-help">
-                              Use this format: 11 Jun 2026 20:00
+                              Choose the fixture date and kickoff time.
                             </p>
                           </div>
 
