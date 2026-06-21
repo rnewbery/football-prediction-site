@@ -215,48 +215,6 @@ export default async function CompetitionsAdminPage({
             </div>
 
             <div>
-              <label htmlFor="exact_score_points">
-                Exact score points
-              </label>
-
-              <input
-                id="exact_score_points"
-                name="exact_score_points"
-                type="number"
-                defaultValue="3"
-                required
-              />
-            </div>
-
-            <div>
-              <label htmlFor="correct_result_points">
-                Correct result points
-              </label>
-
-              <input
-                id="correct_result_points"
-                name="correct_result_points"
-                type="number"
-                defaultValue="1"
-                required
-              />
-            </div>
-
-            <div>
-              <label htmlFor="incorrect_result_points">
-                Incorrect result points
-              </label>
-
-              <input
-                id="incorrect_result_points"
-                name="incorrect_result_points"
-                type="number"
-                defaultValue="0"
-                required
-              />
-            </div>
-
-            <div>
               <label htmlFor="first_prize">1st prize</label>
 
               <input
