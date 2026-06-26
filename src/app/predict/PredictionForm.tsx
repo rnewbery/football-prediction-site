@@ -48,6 +48,7 @@ export default function PredictionForm({
   const [draftMessage, setDraftMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasLoadedDraft, setHasLoadedDraft] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   useEffect(() => {
     const savedDraft = window.localStorage.getItem(storageKey);
@@ -74,7 +75,7 @@ export default function PredictionForm({
   }, [storageKey]);
 
   useEffect(() => {
-    if (!hasLoadedDraft) {
+    if (!hasLoadedDraft || hasSubmitted) {
       return;
     }
 
@@ -108,6 +109,7 @@ export default function PredictionForm({
     accessCode,
     scores,
     hasLoadedDraft,
+    hasSubmitted,
     storageKey,
   ]);
 
@@ -116,6 +118,10 @@ export default function PredictionForm({
     side: "home" | "away",
     value: string
   ) {
+    if (hasSubmitted) {
+      return;
+    }
+
     setScores((currentScores) => ({
       ...currentScores,
       [fixtureId]: {
@@ -134,10 +140,16 @@ export default function PredictionForm({
     setScores({});
     setMessage("");
     setDraftMessage("");
+    setHasSubmitted(false);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (hasSubmitted) {
+      return;
+    }
+
     setMessage("");
 
     const trimmedName = name.trim();
@@ -213,14 +225,12 @@ export default function PredictionForm({
     window.localStorage.removeItem(storageKey);
 
     setMessage(
-      `Your predictions have been submitted. Entry reference: ${entryId}.`
+      `s have been submitted. Entry reference: ${entryId}.`
     );
 
-    setName("");
-    setEmail("");
     setAccessCode("");
-    setScores({});
     setDraftMessage("");
+    setHasSubmitted(true);
     setIsSubmitting(false);
   }
 
@@ -237,6 +247,7 @@ export default function PredictionForm({
               type="text"
               value={name}
               onChange={(event) => setName(event.target.value)}
+              readOnly={hasSubmitted}
               required
             />
           </div>
@@ -252,40 +263,55 @@ export default function PredictionForm({
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
+              readOnly={hasSubmitted}
             />
           </div>
 
-          <div>
-            <label htmlFor="access-code">
-              Competition access code
-            </label>
+          {!hasSubmitted && (
+            <div>
+              <label htmlFor="access-code">
+                Competition access code
+              </label>
 
-            <input
-              id="access-code"
-              name="access_code"
-              type="text"
-              value={accessCode}
-              onChange={(event) =>
-                setAccessCode(event.target.value)
-              }
-              placeholder="Enter the code from the organiser"
-              required
-            />
-          </div>
+              <input
+                id="access-code"
+                name="access_code"
+                type="text"
+                value={accessCode}
+                onChange={(event) =>
+                  setAccessCode(event.target.value)
+                }
+                placeholder="Enter the code from the organiser"
+                required
+              />
+            </div>
+          )}
         </div>
 
-        <p className="form-message">
-          Your progress will save automatically on this device until
-          you submit your entry.
-        </p>
+        {!hasSubmitted ? (
+          <>
+            <p className="form-message">
+              Your progress will save automatically on this device
+              until you submit your entry.
+            </p>
 
-        {draftMessage && (
-          <p className="input-help">{draftMessage}</p>
+            {draftMessage && (
+              <p className="input-help">{draftMessage}</p>
+            )}
+          </>
+        ) : (
+          <p className="form-message success-message">
+            Your submitted predictions are shown below for printing.
+          </p>
         )}
       </section>
 
       <section className="card">
-        <h2>Fixtures</h2>
+        <h2>
+          {hasSubmitted
+            ? "Submitted predictions"
+            : "Fixtures"}
+        </h2>
 
         <div className="table-wrapper">
           <table className="fixtures-table">
@@ -326,6 +352,7 @@ export default function PredictionForm({
                         )
                       }
                       aria-label={`${fixture.home_team} predicted score`}
+                      readOnly={hasSubmitted}
                       required
                     />
                   </td>
@@ -345,6 +372,7 @@ export default function PredictionForm({
                         )
                       }
                       aria-label={`${fixture.away_team} predicted score`}
+                      readOnly={hasSubmitted}
                       required
                     />
                   </td>
@@ -359,27 +387,33 @@ export default function PredictionForm({
         {message && <p className="form-message">{message}</p>}
 
         <div className="form-actions">
-          <button type="submit" disabled={isSubmitting}>
-            {isSubmitting
-              ? "Submitting..."
-              : "Submit predictions"}
-          </button>
+          {!hasSubmitted && (
+            <button type="submit" disabled={isSubmitting}>
+              {isSubmitting
+                ? "Submitting..."
+                : "Submit predictions"}
+            </button>
+          )}
 
           <button
             className="secondary-button"
             type="button"
             onClick={() => window.print()}
           >
-            Print this sheet
+            {hasSubmitted
+              ? "Print predictions"
+              : "Print this sheet"}
           </button>
 
-          <button
-            className="secondary-button"
-            type="button"
-            onClick={clearDraft}
-          >
-            Clear saved draft
-          </button>
+          {!hasSubmitted && (
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={clearDraft}
+            >
+              Clear saved draft
+            </button>
+          )}
         </div>
       </section>
     </form>

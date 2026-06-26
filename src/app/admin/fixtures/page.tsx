@@ -317,6 +317,32 @@ export default async function FixturesPage({
                             />
                           </div>
 
+                                                    <div>
+                            <label
+                              htmlFor={`status-${fixture.id}`}
+                            >
+                              Status
+                            </label>
+
+                            <select
+                              id={`status-${fixture.id}`}
+                              name="match_status"
+                              defaultValue={displayStatus}
+                            >
+                              <option value="scheduled">
+                                Scheduled
+                              </option>
+
+                              <option value="finished">
+                                Finished
+                              </option>
+
+                              <option value="postponed">
+                                Postponed
+                              </option>
+                            </select>
+                          </div>
+
                           <div>
                             <label
                               htmlFor={`home-score-${fixture.id}`}
@@ -353,32 +379,6 @@ export default async function FixturesPage({
                                 fixture.away_score ?? ""
                               }
                             />
-                          </div>
-
-                          <div>
-                            <label
-                              htmlFor={`status-${fixture.id}`}
-                            >
-                              Status
-                            </label>
-
-                            <select
-                              id={`status-${fixture.id}`}
-                              name="match_status"
-                              defaultValue={displayStatus}
-                            >
-                              <option value="scheduled">
-                                Scheduled
-                              </option>
-
-                              <option value="finished">
-                                Finished
-                              </option>
-
-                              <option value="postponed">
-                                Postponed
-                              </option>
-                            </select>
                           </div>
 
                           <div>
