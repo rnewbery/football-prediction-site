@@ -3,8 +3,12 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 import {
   archiveCurrentCompetition,
+  closeCompetitionEntries,
   createCompetition,
   deleteArchivedCompetition,
+  hideCompetitionLeaderboard,
+  setCompetitionAcceptingEntries,
+  setCompetitionLeaderboard,
 } from "./actions";
 
 type CompetitionsAdminPageProps = {
@@ -13,6 +17,156 @@ type CompetitionsAdminPageProps = {
     success?: string;
   }>;
 };
+
+type Competition = {
+  id: number;
+  name: string;
+  entry_cost: number | null;
+  closing_date: string | null;
+  access_code: string | null;
+  accepting_entries: boolean;
+  show_on_leaderboard: boolean;
+};
+
+function formatDate(value: string | null) {
+  if (!value) {
+    return "Not set";
+  }
+
+  return new Date(value).toLocaleString("en-GB");
+}
+
+function renderCompetitionCard(competition: Competition) {
+  return (
+    <div className="admin-tool-link" key={competition.id}>
+      <strong>{competition.name}</strong>
+
+      <div className="competition-details">
+        <div>
+          <span>Entry cost</span>
+          <strong>
+            £{Number(competition.entry_cost ?? 0).toFixed(2)}
+          </strong>
+        </div>
+
+        <div>
+          <span>Closing date</span>
+          <strong>{formatDate(competition.closing_date)}</strong>
+        </div>
+
+        <div>
+          <span>Access code</span>
+          <strong>{competition.access_code ?? "Not set"}</strong>
+        </div>
+
+        <div>
+          <span>Entries</span>
+          <strong>
+            {competition.accepting_entries ? "Open" : "Closed"}
+          </strong>
+        </div>
+
+        <div>
+          <span>Leaderboard</span>
+          <strong>
+            {competition.show_on_leaderboard
+              ? "Current"
+              : "Not current"}
+          </strong>
+        </div>
+      </div>
+
+      <p className="input-help">
+        {competition.accepting_entries &&
+        competition.show_on_leaderboard
+          ? "This competition is open for entries and is also the current public leaderboard."
+          : competition.accepting_entries
+          ? "This competition is open for predictions on the public prediction page."
+          : competition.show_on_leaderboard
+          ? "This competition is the current public leaderboard while results are being entered."
+          : "This competition is active, but not currently open for entries or shown on the public leaderboard."}
+      </p>
+
+      <div className="form-actions">
+        {!competition.accepting_entries ? (
+          <form action={setCompetitionAcceptingEntries}>
+            <input
+              type="hidden"
+              name="competition_id"
+              value={competition.id}
+            />
+
+            <button type="submit">Open for entries</button>
+          </form>
+        ) : (
+          <form action={closeCompetitionEntries}>
+            <input
+              type="hidden"
+              name="competition_id"
+              value={competition.id}
+            />
+
+            <button className="secondary-button" type="submit">
+              Close entries
+            </button>
+          </form>
+        )}
+
+        {!competition.show_on_leaderboard ? (
+          <form action={setCompetitionLeaderboard}>
+            <input
+              type="hidden"
+              name="competition_id"
+              value={competition.id}
+            />
+
+            <button type="submit">
+              Set as current leaderboard
+            </button>
+          </form>
+        ) : (
+          <form action={hideCompetitionLeaderboard}>
+            <input
+              type="hidden"
+              name="competition_id"
+              value={competition.id}
+            />
+
+            <button className="secondary-button" type="submit">
+              Hide leaderboard
+            </button>
+          </form>
+        )}
+
+        <Link
+          className="button-link secondary"
+          href="/admin/fixtures"
+        >
+          Manage fixtures
+        </Link>
+
+        <Link
+          className="button-link secondary"
+          href="/admin/entries"
+        >
+          View entries
+        </Link>
+
+        <form action={archiveCurrentCompetition}>
+          <input
+            type="hidden"
+            name="competition_id"
+            value={competition.id}
+          />
+
+          <button className="danger-button" type="submit">
+            Archive
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 export default async function CompetitionsAdminPage({
   searchParams,
@@ -30,7 +184,7 @@ export default async function CompetitionsAdminPage({
     redirect("/admin/login");
   }
 
-  const { data: currentCompetition, error: currentError } =
+  const { data: activeCompetitions, error: activeError } =
     await supabase
       .from("competitions")
       .select(
@@ -39,17 +193,21 @@ export default async function CompetitionsAdminPage({
           name,
           entry_cost,
           closing_date,
-          access_code
+          access_code,
+          accepting_entries,
+          show_on_leaderboard
         `
       )
       .eq("is_active", true)
-      .limit(1)
-      .maybeSingle();
+      .order("closing_date", {
+        ascending: true,
+        nullsFirst: false,
+      });
 
-  if (currentError) {
+  if (activeError) {
     console.error(
-      "Unable to load current competition:",
-      currentError.message
+      "Unable to load active competitions:",
+      activeError.message
     );
   }
 
@@ -79,8 +237,9 @@ export default async function CompetitionsAdminPage({
           <h1>Competitions</h1>
 
           <p className="intro">
-            Archive finished competitions, create new competitions,
-            and remove test archived competitions.
+            Manage which competition is open for entries, which
+            competition appears on the leaderboard, and which
+            competitions are archived.
           </p>
         </div>
 
@@ -102,62 +261,23 @@ export default async function CompetitionsAdminPage({
       )}
 
       <section className="card">
-        <h2>Current active competition</h2>
+        <h2>Active competitions</h2>
 
-        {!currentCompetition ? (
-          <p>No active competition is currently set.</p>
+        {!activeCompetitions || activeCompetitions.length === 0 ? (
+          <p>No active competitions are currently available.</p>
         ) : (
-          <>
-            <div className="competition-details">
-              <div>
-                <span>Competition</span>
-                <strong>{currentCompetition.name}</strong>
-              </div>
-
-              <div>
-                <span>Entry cost</span>
-                <strong>
-                  £
-                  {Number(
-                    currentCompetition.entry_cost
-                  ).toFixed(2)}
-                </strong>
-              </div>
-
-              <div>
-                <span>Closing date</span>
-                <strong>
-                  {currentCompetition.closing_date
-                    ? new Date(
-                        currentCompetition.closing_date
-                      ).toLocaleString("en-GB")
-                    : "Not set"}
-                </strong>
-              </div>
-            </div>
-
-            <form
-              className="form-actions"
-              action={archiveCurrentCompetition}
-            >
-              <input
-                type="hidden"
-                name="competition_id"
-                value={currentCompetition.id}
-              />
-
-              <button className="danger-button" type="submit">
-                Archive current competition
-              </button>
-            </form>
-
-            <p className="input-help">
-              Only archive after the final results and scores are
-              complete. Archived competitions appear under Previous
-              competitions.
-            </p>
-          </>
+          <div className="admin-links">
+            {activeCompetitions.map((competition) =>
+              renderCompetitionCard(competition)
+            )}
+          </div>
         )}
+
+        <p className="input-help">
+          A competition can be open for predictions, shown as the
+          current leaderboard, both, or neither. Archive it once all
+          results and scores are complete.
+        </p>
       </section>
 
       <section className="card">
@@ -172,7 +292,7 @@ export default async function CompetitionsAdminPage({
                 id="name"
                 name="name"
                 type="text"
-                placeholder="e.g. Prem League 2026"
+                placeholder="e.g. Premier League 2026 - Competition 2"
                 required
               />
             </div>
@@ -265,8 +385,8 @@ export default async function CompetitionsAdminPage({
         </form>
 
         <p className="input-help">
-          Creating a new competition will automatically make any
-          existing active competition inactive.
+          Creating a new competition opens it for entries, but it
+          does not replace the current leaderboard.
         </p>
       </section>
 
@@ -324,8 +444,7 @@ export default async function CompetitionsAdminPage({
 
         <p className="input-help">
           Deleting an archived competition also deletes its fixtures,
-          entries and predictions. The active competition cannot be
-          deleted from this section.
+          entries and predictions.
         </p>
       </section>
     </main>

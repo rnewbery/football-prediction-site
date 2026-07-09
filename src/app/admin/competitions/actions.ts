@@ -49,6 +49,8 @@ export async function archiveCurrentCompetition(formData: FormData) {
     .from("competitions")
     .update({
       is_active: false,
+      accepting_entries: false,
+      show_on_leaderboard: false,
     })
     .eq("id", competitionId);
 
@@ -66,7 +68,7 @@ export async function archiveCurrentCompetition(formData: FormData) {
 
   redirect(
     `/admin/competitions?success=${encodeURIComponent(
-      "Competition archived. You can now create a new active competition."
+      "Competition archived."
     )}`
   );
 }
@@ -78,18 +80,6 @@ export async function createCompetition(formData: FormData) {
   const accessCode = String(formData.get("access_code") ?? "").trim();
   const entryCost = Number(formData.get("entry_cost") ?? 0);
   const closingDate = String(formData.get("closing_date") ?? "").trim();
-
-  const exactScorePoints = Number(
-    formData.get("exact_score_points") ?? 3
-  );
-
-  const correctResultPoints = Number(
-    formData.get("correct_result_points") ?? 1
-  );
-
-  const incorrectResultPoints = Number(
-    formData.get("incorrect_result_points") ?? 0
-  );
 
   const firstPrize = String(formData.get("first_prize") ?? "").trim();
   const secondPrize = String(formData.get("second_prize") ?? "").trim();
@@ -112,74 +102,54 @@ export async function createCompetition(formData: FormData) {
     );
   }
 
-  const { data: newCompetition, error: insertError } = await supabase
+  const { error: closeOtherEntryCompetitionsError } = await supabase
+    .from("competitions")
+    .update({
+      accepting_entries: false,
+    })
+    .eq("accepting_entries", true);
+
+  if (closeOtherEntryCompetitionsError) {
+    console.error(
+      "Unable to close other entry competitions:",
+      closeOtherEntryCompetitionsError.message
+    );
+
+    redirect(
+      `/admin/competitions?error=${encodeURIComponent(
+        "Existing open competitions could not be closed."
+      )}`
+    );
+  }
+
+  const { error: insertError } = await supabase
     .from("competitions")
     .insert({
       name,
       access_code: accessCode,
       entry_cost: entryCost,
       closing_date: closingDate,
-      exact_score_points: exactScorePoints,
-      correct_result_points: correctResultPoints,
-      incorrect_result_points: incorrectResultPoints,
+      exact_score_points: 5,
+      correct_result_points: 2,
+      incorrect_result_points: 0,
       first_prize: firstPrize || null,
       second_prize: secondPrize || null,
       third_prize: thirdPrize || null,
       prize_notes: prizeNotes || null,
-      is_active: false,
-    })
-    .select("id")
-    .single();
+      is_active: true,
+      accepting_entries: true,
+      show_on_leaderboard: false,
+    });
 
-  if (insertError || !newCompetition) {
+  if (insertError) {
     console.error(
       "Unable to create competition:",
-      insertError?.message
+      insertError.message
     );
 
     redirect(
       `/admin/competitions?error=${encodeURIComponent(
-        "Competition could not be created. The current competition has not been changed."
-      )}`
-    );
-  }
-
-  const { error: deactivateError } = await supabase
-    .from("competitions")
-    .update({
-      is_active: false,
-    })
-    .eq("is_active", true);
-
-  if (deactivateError) {
-    console.error(
-      "Unable to deactivate existing competitions:",
-      deactivateError.message
-    );
-
-    redirect(
-      `/admin/competitions?error=${encodeURIComponent(
-        "New competition was created, but the old active competition could not be archived."
-      )}`
-    );
-  }
-
-  const { error: activateError } = await supabase
-    .from("competitions")
-    .update({
-      is_active: true,
-    })
-    .eq("id", newCompetition.id);
-
-  if (activateError) {
-    console.error(
-      "Unable to activate new competition:",
-      activateError.message
-    );
-
-    redirect(
-      `/admin/competitions?error=${encodeURIComponent(
-        "New competition was created, but it could not be activated."
+        "Competition could not be created."
       )}`
     );
   }
@@ -188,7 +158,216 @@ export async function createCompetition(formData: FormData) {
 
   redirect(
     `/admin/competitions?success=${encodeURIComponent(
-      "New competition created and activated."
+      "New competition created and opened for entries."
+    )}`
+  );
+}
+
+export async function setCompetitionAcceptingEntries(
+  formData: FormData
+) {
+  const supabase = await requireAdmin();
+
+  const competitionId = Number(formData.get("competition_id"));
+
+  if (!Number.isFinite(competitionId)) {
+    redirect(
+      `/admin/competitions?error=${encodeURIComponent(
+        "Competition could not be opened for entries."
+      )}`
+    );
+  }
+
+  const { error: closeOthersError } = await supabase
+    .from("competitions")
+    .update({
+      accepting_entries: false,
+    })
+    .neq("id", competitionId);
+
+  if (closeOthersError) {
+    console.error(
+      "Unable to close other entry competitions:",
+      closeOthersError.message
+    );
+
+    redirect(
+      `/admin/competitions?error=${encodeURIComponent(
+        "Other competitions could not be closed for entries."
+      )}`
+    );
+  }
+
+  const { error } = await supabase
+    .from("competitions")
+    .update({
+      is_active: true,
+      accepting_entries: true,
+    })
+    .eq("id", competitionId);
+
+  if (error) {
+    console.error(
+      "Unable to open competition for entries:",
+      error.message
+    );
+
+    redirect(
+      `/admin/competitions?error=${encodeURIComponent(
+        "Competition could not be opened for entries."
+      )}`
+    );
+  }
+
+  revalidateCompetitionPages();
+
+  redirect(
+    `/admin/competitions?success=${encodeURIComponent(
+      "Competition opened for entries."
+    )}`
+  );
+}
+
+export async function closeCompetitionEntries(formData: FormData) {
+  const supabase = await requireAdmin();
+
+  const competitionId = Number(formData.get("competition_id"));
+
+  if (!Number.isFinite(competitionId)) {
+    redirect(
+      `/admin/competitions?error=${encodeURIComponent(
+        "Competition entries could not be closed."
+      )}`
+    );
+  }
+
+  const { error } = await supabase
+    .from("competitions")
+    .update({
+      accepting_entries: false,
+    })
+    .eq("id", competitionId);
+
+  if (error) {
+    console.error(
+      "Unable to close competition entries:",
+      error.message
+    );
+
+    redirect(
+      `/admin/competitions?error=${encodeURIComponent(
+        "Competition entries could not be closed."
+      )}`
+    );
+  }
+
+  revalidateCompetitionPages();
+
+  redirect(
+    `/admin/competitions?success=${encodeURIComponent(
+      "Competition entries closed."
+    )}`
+  );
+}
+
+export async function setCompetitionLeaderboard(formData: FormData) {
+  const supabase = await requireAdmin();
+
+  const competitionId = Number(formData.get("competition_id"));
+
+  if (!Number.isFinite(competitionId)) {
+    redirect(
+      `/admin/competitions?error=${encodeURIComponent(
+        "Current leaderboard could not be changed."
+      )}`
+    );
+  }
+
+  const { error: hideOthersError } = await supabase
+    .from("competitions")
+    .update({
+      show_on_leaderboard: false,
+    })
+    .neq("id", competitionId);
+
+  if (hideOthersError) {
+    console.error(
+      "Unable to hide other leaderboards:",
+      hideOthersError.message
+    );
+
+    redirect(
+      `/admin/competitions?error=${encodeURIComponent(
+        "Other leaderboards could not be hidden."
+      )}`
+    );
+  }
+
+  const { error } = await supabase
+    .from("competitions")
+    .update({
+      is_active: true,
+      show_on_leaderboard: true,
+    })
+    .eq("id", competitionId);
+
+  if (error) {
+    console.error(
+      "Unable to set current leaderboard:",
+      error.message
+    );
+
+    redirect(
+      `/admin/competitions?error=${encodeURIComponent(
+        "Current leaderboard could not be changed."
+      )}`
+    );
+  }
+
+  revalidateCompetitionPages();
+
+  redirect(
+    `/admin/competitions?success=${encodeURIComponent(
+      "Current leaderboard changed."
+    )}`
+  );
+}
+
+export async function hideCompetitionLeaderboard(formData: FormData) {
+  const supabase = await requireAdmin();
+
+  const competitionId = Number(formData.get("competition_id"));
+
+  if (!Number.isFinite(competitionId)) {
+    redirect(
+      `/admin/competitions?error=${encodeURIComponent(
+        "Leaderboard could not be hidden."
+      )}`
+    );
+  }
+
+  const { error } = await supabase
+    .from("competitions")
+    .update({
+      show_on_leaderboard: false,
+    })
+    .eq("id", competitionId);
+
+  if (error) {
+    console.error("Unable to hide leaderboard:", error.message);
+
+    redirect(
+      `/admin/competitions?error=${encodeURIComponent(
+        "Leaderboard could not be hidden."
+      )}`
+    );
+  }
+
+  revalidateCompetitionPages();
+
+  redirect(
+    `/admin/competitions?success=${encodeURIComponent(
+      "Leaderboard hidden."
     )}`
   );
 }

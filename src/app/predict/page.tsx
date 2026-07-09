@@ -23,14 +23,18 @@ export default async function PredictPage() {
   const { data: competition, error: competitionError } =
     await supabase
       .from("competitions")
-      .select("id, name, closing_date")
-      .eq("is_active", true)
+      .select("id, name, closing_date, accepting_entries")
+      .eq("accepting_entries", true)
+      .order("closing_date", {
+        ascending: true,
+        nullsFirst: false,
+      })
       .limit(1)
       .maybeSingle();
 
   if (competitionError) {
     console.error(
-      "Unable to load competition:",
+      "Unable to load competition accepting entries:",
       competitionError.message
     );
   }
@@ -68,7 +72,7 @@ export default async function PredictPage() {
       <div className="page-header">
         <div>
           <p className="eyebrow">
-            {competition?.name ?? "Current competition"}
+            {competition?.name ?? "No competition open"}
           </p>
 
           <h1>Enter your predictions</h1>
@@ -85,7 +89,21 @@ export default async function PredictPage() {
 
       {!competition ? (
         <section className="card">
-          <p>No active competition is available.</p>
+          <h2>No competition is currently open</h2>
+
+          <p>
+            There is no competition currently accepting entries.
+            Please check back when the next competition opens.
+          </p>
+
+          <div className="form-actions">
+            <Link
+              className="button-link secondary"
+              href="/leaderboard"
+            >
+              View current leaderboard
+            </Link>
+          </div>
         </section>
       ) : entriesAreClosed ? (
         <section className="card">
@@ -113,13 +131,18 @@ export default async function PredictPage() {
               className="button-link secondary"
               href="/leaderboard"
             >
-              View leaderboard
+              View current leaderboard
             </Link>
           </div>
         </section>
       ) : !fixtures || fixtures.length === 0 ? (
         <section className="card">
-          <p>No fixtures have been added yet.</p>
+          <h2>No fixtures added yet</h2>
+
+          <p>
+            This competition is open, but no fixtures have been
+            added yet.
+          </p>
         </section>
       ) : (
         <PredictionForm

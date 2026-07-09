@@ -30,36 +30,12 @@ type BreakdownFixture = {
   actual_score: string;
 };
 
-function formatPosition(position: number) {
-  const lastTwoDigits = position % 100;
-  const lastDigit = position % 10;
-
-  if (lastTwoDigits >= 11 && lastTwoDigits <= 13) {
-    return `${position}th`;
-  }
-
-  if (lastDigit === 1) return `${position}st`;
-  if (lastDigit === 2) return `${position}nd`;
-  if (lastDigit === 3) return `${position}rd`;
-
-  return `${position}th`;
-}
-
-function getPositionClass(index: number) {
-  if (index === 0) return "position-badge position-first";
-  if (index === 1) return "position-badge position-second";
-  if (index === 2) return "position-badge position-third";
-
-  return "position-badge";
-}
-
 function getPointsCellClass(points: number | undefined) {
   if (points === undefined) return "";
   if (points >= 5) return "breakdown-points-exact";
   if (points >= 3) return "breakdown-points-strong";
   if (points >= 2) return "breakdown-points-standard";
   if (points >= 1) return "breakdown-points-low";
-  if (points > 0) return "breakdown-points-zero";
 
   return "breakdown-points-zero";
 }
@@ -76,53 +52,6 @@ function csvEscape(value: string | number | boolean | null | undefined) {
   }
 
   return text;
-}
-
-function buildCombinedCsv(
-  leaderboard: LeaderboardEntry[],
-  gameBreakdown: GameBreakdownEntry[]
-) {
-  const leaderboardHeaders = [
-    "Position",
-    "Participant",
-    "Points",
-    "Exact Scores",
-  ];
-
-  const leaderboardRows = leaderboard.map((entry, index) => [
-    formatPosition(index + 1),
-    entry.participant_name,
-    entry.total_points,
-    entry.exact_scores,
-  ]);
-
-  const breakdownHeaders = [
-    "Fixture",
-    "Participant",
-    "Result",
-    "Points",
-    "Exact score",
-  ];
-
-  const breakdownRows = gameBreakdown.map((entry) => [
-    entry.fixture_label,
-    entry.participant_name,
-    entry.actual_score || "Not entered",
-    entry.points_awarded,
-    entry.is_exact_score ? "Yes" : "No",
-  ]);
-
-  return [
-    ["Main leaderboard"],
-    leaderboardHeaders,
-    ...leaderboardRows,
-    [],
-    ["Game breakdown"],
-    breakdownHeaders,
-    ...breakdownRows,
-  ]
-    .map((row) => row.map(csvEscape).join(","))
-    .join("\n");
 }
 
 function buildBreakdownFixtures(
@@ -184,6 +113,34 @@ function buildBreakdownRows(
   }));
 }
 
+function buildBreakdownCsv(
+  breakdownRows: ReturnType<typeof buildBreakdownRows>,
+  breakdownFixtures: BreakdownFixture[]
+) {
+  const headers = [
+    "Participant",
+    "Total",
+    ...breakdownFixtures.map(
+      (fixture) =>
+        `${fixture.fixture_label} (${fixture.actual_score})`
+    ),
+  ];
+
+  const rows = breakdownRows.map((row) => [
+    row.participant_name,
+    row.total_points,
+    ...breakdownFixtures.map((fixture) => {
+      const cell = row.cells[fixture.fixture_id];
+
+      return cell?.points_awarded ?? "";
+    }),
+  ]);
+
+  return [headers, ...rows]
+    .map((row) => row.map(csvEscape).join(","))
+    .join("\n");
+}
+
 export default async function LeaderboardPage() {
   const { data: competition, error: competitionError } =
     await supabase
@@ -198,13 +155,13 @@ export default async function LeaderboardPage() {
           prize_notes
         `
       )
-      .eq("is_active", true)
+      .eq("show_on_leaderboard", true)
       .limit(1)
       .maybeSingle();
 
   if (competitionError) {
     console.error(
-      "Unable to load competition:",
+      "Unable to load current leaderboard competition:",
       competitionError.message
     );
   }
@@ -257,11 +214,10 @@ export default async function LeaderboardPage() {
     gameBreakdown
   );
 
-  const hasAnyResults = gameBreakdown.some(
-    (entry) => entry.actual_score && entry.actual_score.trim() !== ""
+  const csvContent = buildBreakdownCsv(
+    breakdownRows,
+    breakdownFixtures
   );
-
-  const csvContent = buildCombinedCsv(leaderboard, gameBreakdown);
 
   const csvDownloadHref = `data:text/csv;charset=utf-8,${encodeURIComponent(
     csvContent
@@ -272,13 +228,13 @@ export default async function LeaderboardPage() {
       <div className="page-header">
         <div>
           <p className="eyebrow">
-            {competition?.name ?? "Current competition"}
+            {competition?.name ?? "No current leaderboard"}
           </p>
 
           <h1>Leaderboard</h1>
 
           <p className="intro">
-            View the current competition leaderboard and game
+            View the current competition results and points
             breakdown.
           </p>
         </div>
@@ -290,7 +246,12 @@ export default async function LeaderboardPage() {
 
       {!competition ? (
         <section className="card">
-          <p>No active competition is available.</p>
+          <h2>No current leaderboard</h2>
+
+          <p>
+            No competition is currently set to show on the public
+            leaderboard.
+          </p>
         </section>
       ) : (
         <>
@@ -330,67 +291,6 @@ export default async function LeaderboardPage() {
           )}
 
           <section className="card">
-            <h2>Main leaderboard</h2>
-
-            {leaderboard.length === 0 ? (
-              <p>No leaderboard entries are available yet.</p>
-            ) : (
-              <>
-                <div className="table-wrapper">
-                  <table className="leaderboard-table">
-                    <thead>
-                      <tr>
-                        <th>Position</th>
-                        <th>Participant</th>
-                        <th>Points</th>
-                        <th>Exact scores</th>
-                      </tr>
-                    </thead>
-
-                    <tbody>
-                      {leaderboard.map((entry, index) => (
-                        <tr
-                          key={`${entry.participant_name}-${index}`}
-                        >
-                          <td>
-                            {hasAnyResults ? (
-                              <span className={getPositionClass(index)}>
-                                {formatPosition(index + 1)}
-                              </span>
-                            ) : (
-                              <span className="position-badge position-pending">
-                                -
-                              </span>
-                            )}
-                          </td>
-
-                          <td>{entry.participant_name}</td>
-                          <td>{entry.total_points}</td>
-                          <td>{entry.exact_scores}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="form-actions">
-                  <PrintButton />
-
-                  <a
-                    className="button-link secondary"
-                    href={csvDownloadHref}
-                    download={`leaderboard-${competition.name
-                      .toLowerCase()
-                      .replaceAll(" ", "-")}.csv`}
-                  >
-                    Export leaderboard CSV
-                  </a>
-                </div>
-              </>
-            )}
-          </section>
-
-          <section className="card">
             <h2>Game breakdown</h2>
 
             {breakdownFixtures.length === 0 ? (
@@ -400,7 +300,8 @@ export default async function LeaderboardPage() {
             ) : (
               <>
                 <p className="input-help">
-                  Scores for all finished fixtures.
+                  Points for each finished fixture. The total column
+                  shows each participant’s overall score.
                 </p>
 
                 <div className="table-wrapper">
@@ -458,6 +359,20 @@ export default async function LeaderboardPage() {
                       ))}
                     </tbody>
                   </table>
+                </div>
+
+                <div className="form-actions">
+                  <PrintButton />
+
+                  <a
+                    className="button-link secondary"
+                    href={csvDownloadHref}
+                    download={`leaderboard-${competition.name
+                      .toLowerCase()
+                      .replaceAll(" ", "-")}.csv`}
+                  >
+                    Export CSV
+                  </a>
                 </div>
               </>
             )}

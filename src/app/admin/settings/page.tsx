@@ -10,6 +10,20 @@ type SettingsPageProps = {
   }>;
 };
 
+type Competition = {
+  id: number;
+  name: string;
+  entry_cost: number | null;
+  closing_date: string | null;
+  access_code: string | null;
+  first_prize: string | null;
+  second_prize: string | null;
+  third_prize: string | null;
+  prize_notes: string | null;
+  accepting_entries: boolean;
+  show_on_leaderboard: boolean;
+};
+
 function formatDateTimeLocalUk(value: string | null) {
   if (!value) {
     return "";
@@ -39,6 +53,25 @@ function formatDateTimeLocalUk(value: string | null) {
   return `${year}-${month}-${day}T${hour}:${minute}`;
 }
 
+function getCompetitionStatus(competition: Competition) {
+  if (
+    competition.accepting_entries &&
+    competition.show_on_leaderboard
+  ) {
+    return "Open for entries and current leaderboard";
+  }
+
+  if (competition.accepting_entries) {
+    return "Open for entries";
+  }
+
+  if (competition.show_on_leaderboard) {
+    return "Current leaderboard";
+  }
+
+  return "Active";
+}
+
 export default async function SettingsPage({
   searchParams,
 }: SettingsPageProps) {
@@ -53,28 +86,36 @@ export default async function SettingsPage({
     redirect("/admin/login");
   }
 
-  const { data: competition } = await supabase
-    .from("competitions")
-    .select(
-      `
-      id,
-      name,
-      entry_cost,
-      closing_date,
-      access_code,
-      first_prize,
-      second_prize,
-      third_prize,
-      prize_notes
-    `
-    )
-    .eq("is_active", true)
-    .limit(1)
-    .maybeSingle();
+  const { data: competitions, error: competitionsError } =
+    await supabase
+      .from("competitions")
+      .select(
+        `
+          id,
+          name,
+          entry_cost,
+          closing_date,
+          access_code,
+          first_prize,
+          second_prize,
+          third_prize,
+          prize_notes,
+          accepting_entries,
+          show_on_leaderboard
+        `
+      )
+      .eq("is_active", true)
+      .order("closing_date", {
+        ascending: true,
+        nullsFirst: false,
+      });
 
-  const closingDateValue = formatDateTimeLocalUk(
-    competition?.closing_date ?? null
-  );
+  if (competitionsError) {
+    console.error(
+      "Unable to load competitions:",
+      competitionsError.message
+    );
+  }
 
   return (
     <main>
@@ -85,7 +126,8 @@ export default async function SettingsPage({
           <h1>Competition settings</h1>
 
           <p className="intro">
-            Edit the competition details, entry code and prizes.
+            Edit competition details, entry codes, closing dates and
+            prizes.
           </p>
         </div>
 
@@ -106,149 +148,202 @@ export default async function SettingsPage({
         </p>
       )}
 
-      {!competition ? (
+      {!competitions || competitions.length === 0 ? (
         <section className="card">
+          <h2>No active competitions</h2>
+
           <p>No active competition is available.</p>
+
+          <div className="form-actions">
+            <Link
+              className="button-link secondary"
+              href="/admin/competitions"
+            >
+              Manage competitions
+            </Link>
+          </div>
         </section>
       ) : (
         <>
-          <section className="card">
-            <form action={updateCompetition}>
-              <input
-                type="hidden"
-                name="competition_id"
-                value={competition.id}
-              />
+          {competitions.map((competition) => {
+            const closingDateValue = formatDateTimeLocalUk(
+              competition.closing_date
+            );
 
-              <h2>Basic details</h2>
+            return (
+              <section className="card" key={competition.id}>
+                <p className="eyebrow">
+                  {getCompetitionStatus(competition)}
+                </p>
 
-              <div className="settings-grid">
-                <div>
-                  <label htmlFor="competition-name">
-                    Competition name
-                  </label>
-
+                <form action={updateCompetition}>
                   <input
-                    id="competition-name"
-                    name="name"
-                    type="text"
-                    defaultValue={competition.name}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="access-code">
-                    Competition access code
-                  </label>
-
-                  <input
-                    id="access-code"
-                    name="access_code"
-                    type="text"
-                    defaultValue={competition.access_code ?? ""}
-                    placeholder="Example: GARY2026"
-                    required
+                    type="hidden"
+                    name="competition_id"
+                    value={competition.id}
                   />
 
-                  <p className="input-help">
-                    People need this code before they can submit an
-                    entry.
-                  </p>
-                </div>
+                  <h2>{competition.name}</h2>
 
-                <div>
-                  <label htmlFor="entry-cost">Entry cost</label>
+                  <div className="settings-grid">
+                    <div>
+                      <label
+                        htmlFor={`competition-name-${competition.id}`}
+                      >
+                        Competition name
+                      </label>
 
-                  <input
-                    id="entry-cost"
-                    name="entry_cost"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    defaultValue={competition.entry_cost}
-                  />
-                </div>
+                      <input
+                        id={`competition-name-${competition.id}`}
+                        name="name"
+                        type="text"
+                        defaultValue={competition.name}
+                        required
+                      />
+                    </div>
 
-                <div>
-                  <label htmlFor="closing-date">
-                    Closing date and time
-                  </label>
+                    <div>
+                      <label
+                        htmlFor={`access-code-${competition.id}`}
+                      >
+                        Competition access code
+                      </label>
 
-                  <input
-                    id="closing-date"
-                    name="closing_date"
-                    type="datetime-local"
-                    defaultValue={closingDateValue}
-                  />
-                </div>
-              </div>
+                      <input
+                        id={`access-code-${competition.id}`}
+                        name="access_code"
+                        type="text"
+                        defaultValue={
+                          competition.access_code ?? ""
+                        }
+                        placeholder="Example: GARY2026"
+                        required
+                      />
 
-              <h2>Prizes</h2>
+                      <p className="input-help">
+                        People need this code before they can submit
+                        an entry.
+                      </p>
+                    </div>
 
-              <div className="settings-grid">
-                <div>
-                  <label htmlFor="first-prize">
-                    First prize
-                  </label>
+                    <div>
+                      <label
+                        htmlFor={`entry-cost-${competition.id}`}
+                      >
+                        Entry cost
+                      </label>
 
-                  <input
-                    id="first-prize"
-                    name="first_prize"
-                    type="text"
-                    defaultValue={competition.first_prize ?? ""}
-                    placeholder="Example: £100"
-                  />
-                </div>
+                      <input
+                        id={`entry-cost-${competition.id}`}
+                        name="entry_cost"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        defaultValue={
+                          competition.entry_cost ?? 0
+                        }
+                      />
+                    </div>
 
-                <div>
-                  <label htmlFor="second-prize">
-                    Second prize
-                  </label>
+                    <div>
+                      <label
+                        htmlFor={`closing-date-${competition.id}`}
+                      >
+                        Closing date and time
+                      </label>
 
-                  <input
-                    id="second-prize"
-                    name="second_prize"
-                    type="text"
-                    defaultValue={competition.second_prize ?? ""}
-                    placeholder="Example: £50"
-                  />
-                </div>
+                      <input
+                        id={`closing-date-${competition.id}`}
+                        name="closing_date"
+                        type="datetime-local"
+                        defaultValue={closingDateValue}
+                      />
+                    </div>
+                  </div>
 
-                <div>
-                  <label htmlFor="third-prize">
-                    Third prize
-                  </label>
+                  <h3>Prizes</h3>
 
-                  <input
-                    id="third-prize"
-                    name="third_prize"
-                    type="text"
-                    defaultValue={competition.third_prize ?? ""}
-                    placeholder="Example: £25"
-                  />
-                </div>
+                  <div className="settings-grid">
+                    <div>
+                      <label
+                        htmlFor={`first-prize-${competition.id}`}
+                      >
+                        First prize
+                      </label>
 
-                <div>
-                  <label htmlFor="prize-notes">
-                    Prize notes
-                  </label>
+                      <input
+                        id={`first-prize-${competition.id}`}
+                        name="first_prize"
+                        type="text"
+                        defaultValue={
+                          competition.first_prize ?? ""
+                        }
+                        placeholder="Example: £100"
+                      />
+                    </div>
 
-                  <textarea
-                    id="prize-notes"
-                    name="prize_notes"
-                    defaultValue={competition.prize_notes ?? ""}
-                    placeholder="Example: Prizes depend on number of entries."
-                    rows={4}
-                  />
-                </div>
-              </div>
+                    <div>
+                      <label
+                        htmlFor={`second-prize-${competition.id}`}
+                      >
+                        Second prize
+                      </label>
 
-              <div className="form-actions">
-                <button type="submit">Save settings</button>
-              </div>
-            </form>
-          </section>
+                      <input
+                        id={`second-prize-${competition.id}`}
+                        name="second_prize"
+                        type="text"
+                        defaultValue={
+                          competition.second_prize ?? ""
+                        }
+                        placeholder="Example: £50"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor={`third-prize-${competition.id}`}
+                      >
+                        Third prize
+                      </label>
+
+                      <input
+                        id={`third-prize-${competition.id}`}
+                        name="third_prize"
+                        type="text"
+                        defaultValue={
+                          competition.third_prize ?? ""
+                        }
+                        placeholder="Example: £25"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor={`prize-notes-${competition.id}`}
+                      >
+                        Prize notes
+                      </label>
+
+                      <textarea
+                        id={`prize-notes-${competition.id}`}
+                        name="prize_notes"
+                        defaultValue={
+                          competition.prize_notes ?? ""
+                        }
+                        placeholder="Example: Prizes depend on number of entries."
+                        rows={4}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-actions">
+                    <button type="submit">Save settings</button>
+                  </div>
+                </form>
+              </section>
+            );
+          })}
 
           <section className="card">
             <h2>Scoring rules</h2>
