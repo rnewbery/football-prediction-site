@@ -313,11 +313,11 @@ export default async function FixturesPage({
                         id={`new-game-number-${competition.id}`}
                         name="game_number"
                         type="text"
-                        placeholder=" or Week 2"
+                        placeholder="Week 1"
                       />
 
                       <p className="input-help">
-                        Must be in format: Week 1, Week 2 etc.
+                        Use Week 1, Week 2, Week 3, etc.
                       </p>
                     </div>
 
@@ -363,7 +363,7 @@ export default async function FixturesPage({
                         "scheduled";
 
                       return (
-                        <><article
+                        <article
                           className="admin-fixture-card"
                           key={fixture.id}
                         >
@@ -371,12 +371,14 @@ export default async function FixturesPage({
                             <input
                               type="hidden"
                               name="fixture_id"
-                              value={fixture.id} />
+                              value={fixture.id}
+                            />
 
                             <input
                               type="hidden"
                               name="competition_id"
-                              value={competition.id} />
+                              value={competition.id}
+                            />
 
                             <div className="fixture-edit-grid">
                               <div>
@@ -393,7 +395,8 @@ export default async function FixturesPage({
                                   defaultValue={formatKickoffForInput(
                                     fixture
                                   )}
-                                  required />
+                                  required
+                                />
 
                                 <p className="input-help">
                                   Choose the fixture date and kickoff
@@ -413,7 +416,8 @@ export default async function FixturesPage({
                                   name="home_team"
                                   type="text"
                                   defaultValue={fixture.home_team}
-                                  required />
+                                  required
+                                />
                               </div>
 
                               <div>
@@ -428,7 +432,8 @@ export default async function FixturesPage({
                                   name="away_team"
                                   type="text"
                                   defaultValue={fixture.away_team}
-                                  required />
+                                  required
+                                />
                               </div>
 
                               <div>
@@ -470,7 +475,8 @@ export default async function FixturesPage({
                                   type="number"
                                   min="0"
                                   step="1"
-                                  defaultValue={fixture.home_score ?? ""} />
+                                  defaultValue={fixture.home_score ?? ""}
+                                />
                               </div>
 
                               <div>
@@ -486,7 +492,8 @@ export default async function FixturesPage({
                                   type="number"
                                   min="0"
                                   step="1"
-                                  defaultValue={fixture.away_score ?? ""} />
+                                  defaultValue={fixture.away_score ?? ""}
+                                />
                               </div>
 
                               <div>
@@ -501,50 +508,56 @@ export default async function FixturesPage({
                                   name="game_number"
                                   type="text"
                                   defaultValue={fixture.group_name ?? ""}
-                                  placeholder=" or Week 2" />
+                                  placeholder="Week 1"
+                                />
 
                                 <p className="input-help">
-                                  Must be in format: Week 1, Week 2 etc.
+                                  Use Week 1, Week 2, Week 3, etc.
                                 </p>
-                              </p>
+                              </div>
+
+                              <div>
+                                <label
+                                  htmlFor={`external-fixture-id-${fixture.id}`}
+                                >
+                                  API fixture
+                                </label>
+
+                                <input
+                                  id={`external-fixture-id-${fixture.id}`}
+                                  name="external_fixture_id"
+                                  type="number"
+                                  min="1"
+                                  step="1"
+                                  defaultValue={
+                                    fixture.external_fixture_id ?? ""
+                                  }
+                                  placeholder="e.g. 66456904"
+                                />
+
+                                <p className="input-help">
+                                  {fixture.external_fixture_id
+                                    ? `Linked: ${fixture.external_fixture_id}`
+                                    : "Not linked"}
+                                </p>
+                              </div>
                             </div>
 
-                            <div>
-                              <label
-                                htmlFor={`external-fixture-id-${fixture.id}`}
-                              >
-                                API fixture
-                              </label>
-
-                              <input
-                                id={`external-fixture-id-${fixture.id}`}
-                                name="external_fixture_id"
-                                type="number"
-                                min="1"
-                                step="1"
-                                defaultValue={fixture.external_fixture_id ?? ""}
-                                placeholder="e.g. 66456904" />
-
-                              <p className="input-help">
-                                {fixture.external_fixture_id
-                                  ? `Linked: ${fixture.external_fixture_id}`
-                                  : "Not linked"}
-                              </p>
+                            <div className="form-actions">
+                              <button type="submit">
+                                Save changes
+                              </button>
                             </div>
-                          </div>
+                          </form>
 
                           <div className="form-actions">
-                            <button type="submit">
-                              Save changes
-                            </button>
-                          </div>
-                        </form><div className="form-actions">
                             {fixture.external_fixture_id && (
                               <form action={unlinkApiFixture}>
                                 <input
                                   type="hidden"
                                   name="fixture_id"
-                                  value={fixture.id} />
+                                  value={fixture.id}
+                                />
 
                                 <button
                                   className="secondary-button"
@@ -559,12 +572,14 @@ export default async function FixturesPage({
                               <input
                                 type="hidden"
                                 name="fixture_id"
-                                value={fixture.id} />
+                                value={fixture.id}
+                              />
 
                               <input
                                 type="hidden"
                                 name="competition_id"
-                                value={competition.id} />
+                                value={competition.id}
+                              />
 
                               <button
                                 className="danger-button"
@@ -573,7 +588,7 @@ export default async function FixturesPage({
                                 Delete fixture
                               </button>
                             </form>
-                          </div></>
+                          </div>
                         </article>
                       );
                     })}
