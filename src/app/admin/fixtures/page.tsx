@@ -317,7 +317,7 @@ export default async function FixturesPage({
                       />
 
                       <p className="input-help">
-                        Optional. Use this for the week or group.
+                        In format: Week 1, Week 2 etc.
                       </p>
                     </div>
 
