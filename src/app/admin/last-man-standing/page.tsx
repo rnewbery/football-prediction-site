@@ -58,10 +58,10 @@ type Entry = {
 };
 
 type AdminLastManStandingPageProps = {
-  searchParams?: {
+  searchParams?: Promise<{
     success?: string;
     error?: string;
-  };
+  }>;
 };
 
 function formatDate(value: string | null) {
@@ -142,7 +142,7 @@ function groupPicksByWeek(entry: Entry) {
 export default async function AdminLastManStandingPage({
   searchParams,
 }: AdminLastManStandingPageProps) {
-  const params = searchParams;
+  const params = await searchParams;
 
   const supabase = await createSupabaseServerClient();
 
@@ -211,7 +211,13 @@ export default async function AdminLastManStandingPage({
     );
   }
 
-  const lmsCompetitionIds = (competitions ?? []).map(
+  const typedScoreCompetitions =
+    (scoreCompetitions ?? []) as ScoreCompetition[];
+
+  const typedCompetitions =
+    (competitions ?? []) as unknown as LastManStandingCompetition[];
+
+  const lmsCompetitionIds = typedCompetitions.map(
     (competition) => competition.id
   );
 
@@ -272,12 +278,6 @@ export default async function AdminLastManStandingPage({
       entriesError.message
     );
   }
-
-  const typedScoreCompetitions =
-    (scoreCompetitions ?? []) as ScoreCompetition[];
-
-  const typedCompetitions =
-    (competitions ?? []) as LastManStandingCompetition[];
 
   const typedWeekRules = (weekRules ?? []) as WeekRule[];
   const typedEntries = (entries ?? []) as unknown as Entry[];
