@@ -1199,3 +1199,84 @@ textarea:focus {
   color: #ffffff;
   font-weight: 900;
 }
+.checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.checkbox-label input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+.fixtures-table td {
+  vertical-align: middle;
+}
+.lms-button {
+  background: #4f7cff;
+  color: #ffffff;
+}
+
+.lms-button:hover {
+  background: #3f68dc;
+}
+.actions,
+.form-actions,
+.entry-action-row,
+.admin-header-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.button-link,
+button.button-link,
+.danger-button,
+.sign-out-button {
+  min-height: 44px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  text-align: center;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.admin-tool-link {
+  min-height: 64px;
+}
+
+.entry-action-row form,
+.form-actions form,
+.admin-header-actions form {
+  margin: 0;
+}
+
+@media (max-width: 700px) {
+  .actions,
+  .form-actions,
+  .entry-action-row,
+  .admin-header-actions {
+    align-items: stretch;
+  }
+
+  .actions .button-link,
+  .form-actions .button-link,
+  .form-actions .danger-button,
+  .entry-action-row .button-link,
+  .entry-action-row .danger-button,
+  .admin-header-actions .button-link,
+  .admin-header-actions .danger-button {
+    width: 100%;
+  }
+}
