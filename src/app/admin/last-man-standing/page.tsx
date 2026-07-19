@@ -58,10 +58,10 @@ type Entry = {
 };
 
 type AdminLastManStandingPageProps = {
-  searchParams?: Promise<{
+  searchParams?: {
     success?: string;
     error?: string;
-  }>;
+  };
 };
 
 function formatDate(value: string | null) {
@@ -142,7 +142,7 @@ function groupPicksByWeek(entry: Entry) {
 export default async function AdminLastManStandingPage({
   searchParams,
 }: AdminLastManStandingPageProps) {
-  const params = await searchParams;
+  const params = searchParams;
 
   const supabase = await createSupabaseServerClient();
 
